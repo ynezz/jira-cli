@@ -21,6 +21,7 @@ const attachmentHelpText = `[default]ATTACHMENT LIST ACTIONS
 
 * [yellow]← → ↑ ↓ / j, k, h, l[default] to navigate
 * [yellow]ENTER[default] to download selected attachment
+* [yellow]D / Delete[default] to delete selected attachment
 * [yellow]c[default] to copy attachment URL to clipboard
 * [yellow]CTRL + k[default] to copy attachment ID to clipboard
 * [yellow]CTRL + r / F5[default] to refresh the list
@@ -62,6 +63,7 @@ func (al *AttachmentList) RenderInTable() error {
 		tui.WithTableFooterText(fmt.Sprintf("Showing %d attachments", len(al.Data))),
 		tui.WithTableHelpText(attachmentHelpText),
 		tui.WithDownloadFunc(al.downloadAttachment()),
+		tui.WithDeleteFunc(al.deleteAttachment()),
 		tui.WithCopyFunc(copyAttachmentURL(al.Data)),
 		tui.WithCopyKeyFunc(copyAttachmentID()),
 		tui.WithRefreshFunc(al.Refresh),
@@ -219,5 +221,29 @@ func copyAttachmentID() tui.CopyKeyFunc {
 		data := d.(tui.TableData)
 		id := data.Get(r, data.GetIndex(fieldID))
 		_ = clipboard.WriteAll(id)
+	}
+}
+
+// deleteAttachment returns a DeleteFunc that deletes the selected attachment.
+func (al *AttachmentList) deleteAttachment() tui.DeleteFunc {
+	return func(r, _ int, d interface{}) (string, func() error) {
+		if r == 0 { // Skip header row
+			return "", nil
+		}
+
+		data := d.(tui.TableData)
+		attachmentID := data.Get(r, data.GetIndex(fieldID))
+		filename := data.Get(r, data.GetIndex(fieldFilename))
+
+		if attachmentID == "" {
+			return "", nil
+		}
+
+		deleteHandler := func() error {
+			client := api.DefaultClient(false)
+			return client.DeleteAttachment(attachmentID)
+		}
+
+		return filename, deleteHandler
 	}
 }

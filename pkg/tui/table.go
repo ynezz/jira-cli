@@ -46,6 +46,10 @@ type CopyKeyFunc func(row, column int, data interface{})
 // It returns a function to execute during screen suspension, or nil to skip.
 type DownloadFunc func(row, col int, data interface{}) func()
 
+// DeleteFunc is fired when a user presses Delete or 'D' in the table.
+// It returns the item name (for confirmation) and a delete handler function.
+type DeleteFunc func(row, col int, data interface{}) (itemName string, deleteHandler func() error)
+
 // TableData is the data to be displayed in a table.
 type TableData [][]string
 
@@ -107,6 +111,7 @@ type Table struct {
 	copyFunc     CopyFunc
 	copyKeyFunc  CopyKeyFunc
 	downloadFunc DownloadFunc
+	deleteFunc   DeleteFunc
 }
 
 // TableOption is a functional option to wrap table properties.
@@ -227,6 +232,13 @@ func WithDownloadFunc(fn DownloadFunc) TableOption {
 	}
 }
 
+// WithDeleteFunc sets a handler for Delete/D key that deletes the selected item with confirmation.
+func WithDeleteFunc(fn DeleteFunc) TableOption {
+	return func(t *Table) {
+		t.deleteFunc = fn
+	}
+}
+
 // WithFixedColumns sets the number of columns that are locked (do not scroll right).
 func WithFixedColumns(cols uint) TableOption {
 	return func(t *Table) {
@@ -311,6 +323,11 @@ func (t *Table) initTable() {
 				}
 				r, c := t.view.GetSelection()
 				t.copyKeyFunc(r, c, t.data)
+			}
+			if ev.Key() == tcell.KeyDelete {
+				if t.deleteFunc != nil {
+					t.handleDelete()
+				}
 			}
 			if ev.Key() == tcell.KeyRune {
 				switch ev.Rune() {
@@ -406,12 +423,79 @@ func (t *Table) initTable() {
 						// Refresh the screen.
 						t.screen.Draw()
 					}()
+				case 'D':
+					if t.deleteFunc != nil {
+						t.handleDelete()
+					}
 				}
 			}
 			return ev
 		})
 
 	t.view.SetFixed(1, int(t.colFixed))
+}
+
+func (t *Table) handleDelete() {
+	r, c := t.view.GetSelection()
+	if r == 0 { // Skip header row
+		return
+	}
+
+	itemName, deleteHandler := t.deleteFunc(r, c, t.data)
+	if deleteHandler == nil {
+		return
+	}
+
+	refreshContextInFooter := func() {
+		t.action.GetFooter().SetText("Use TAB or ← → to navigate, ENTER to select, ESC or q to cancel.").SetTextColor(tcell.ColorGray)
+	}
+
+	go func() {
+		func() {
+			t.painter.ShowPage("secondary").SendToFront("secondary")
+			defer func() {
+				t.painter.HidePage("secondary")
+				t.painter.ShowPage("action")
+			}()
+			refreshContextInFooter()
+
+			t.action.ClearButtons().AddButtons([]string{"Cancel", "Delete"}).SetFocus(0)
+			t.action.SetText(
+				fmt.Sprintf("Are you sure you want to delete %q?", itemName),
+			)
+
+			t.action.SetDoneFunc(func(btnIndex int, btnLabel string) {
+				if btnIndex != 1 { // Not "Delete" button
+					t.painter.HidePage("action")
+					refreshContextInFooter()
+					return
+				}
+
+				t.action.GetFooter().SetText("Deleting. Please wait...").SetTextColor(tcell.ColorGray)
+				t.screen.ForceDraw()
+
+				err := deleteHandler()
+				if err != nil {
+					t.action.GetFooter().SetText(
+						fmt.Sprintf("Error: %s", err.Error()),
+					).SetTextColor(tcell.ColorRed)
+					return
+				}
+
+				t.painter.HidePage("action")
+				refreshContextInFooter()
+
+				// Trigger refresh to reload the list without the deleted item
+				if t.refreshFunc != nil {
+					t.screen.Stop()
+					t.refreshFunc()
+				}
+			})
+		}()
+
+		// Refresh the screen.
+		t.screen.Draw()
+	}()
 }
 
 func renderTableHeader(t *Table, data []string) {
