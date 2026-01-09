@@ -109,6 +109,15 @@ func (i Issue) String() string {
 	if len(i.Data.Fields.IssueLinks) > 0 {
 		s.WriteString(fmt.Sprintf("\n\n%s\n\n%s\n", i.separator("Linked Issues"), i.linkedIssues()))
 	}
+	if len(i.Data.Fields.Attachment) > 0 {
+		s.WriteString(
+			fmt.Sprintf(
+				"\n\n%s\n%s",
+				i.separator(fmt.Sprintf("%d Attachments", len(i.Data.Fields.Attachment))),
+				i.attachments(),
+			),
+		)
+	}
 	total := i.Data.Fields.Comment.Total
 	if total > 0 && i.Options.NumComments > 0 {
 		sep := fmt.Sprintf("%d Comments", total)
@@ -156,6 +165,17 @@ func (i Issue) fragments() []fragment {
 			fragment{Body: i.separator("Linked Issues")},
 			newBlankFragment(2),
 			fragment{Body: i.linkedIssues()},
+			newBlankFragment(1),
+		)
+	}
+
+	if len(i.Data.Fields.Attachment) > 0 {
+		scraps = append(
+			scraps,
+			newBlankFragment(1),
+			fragment{Body: i.separator(fmt.Sprintf("%d Attachments", len(i.Data.Fields.Attachment)))},
+			newBlankFragment(2),
+			fragment{Body: i.attachments()},
 			newBlankFragment(1),
 		)
 	}
@@ -231,9 +251,9 @@ func (i Issue) header() string {
 		wch = fmt.Sprintf("You + %d watchers", i.Data.Fields.Watches.WatchCount-1)
 	}
 	return fmt.Sprintf(
-		"%s %s  %s %s  ⌛ %s  👷 %s  🔑️ %s  💭 %d comments  \U0001F9F5 %d linked\n# %s\n⏱️  %s  🔎 %s  🚀 %s  📦 %s  🏷️  %s  👀 %s",
+		"%s %s  %s %s  ⌛ %s  👷 %s  🔑️ %s  💭 %d comments  \U0001F9F5 %d linked  📎 %d attachments\n# %s\n⏱️  %s  🔎 %s  🚀 %s  📦 %s  🏷️  %s  👀 %s",
 		iti, it, sti, st, cmdutil.FormatDateTimeHuman(i.Data.Fields.Updated, jira.RFC3339), as, i.Data.Key,
-		i.Data.Fields.Comment.Total, len(i.Data.Fields.IssueLinks),
+		i.Data.Fields.Comment.Total, len(i.Data.Fields.IssueLinks), len(i.Data.Fields.Attachment),
 		i.Data.Fields.Summary,
 		cmdutil.FormatDateTimeHuman(i.Data.Fields.Created, jira.RFC3339), i.Data.Fields.Reporter.Name,
 		i.Data.Fields.Priority.Name, cmpt, lbl, wch,
@@ -378,6 +398,50 @@ func (i Issue) linkedIssues() string {
 	return linked.String()
 }
 
+func (i Issue) attachments() string {
+	if len(i.Data.Fields.Attachment) == 0 {
+		return ""
+	}
+
+	var (
+		attachments    strings.Builder
+		maxFilenameLen int
+		maxSizeLen     int
+		maxAuthorLen   int
+		filenameLimit  = 40
+	)
+
+	for idx := range i.Data.Fields.Attachment {
+		a := i.Data.Fields.Attachment[idx]
+		maxFilenameLen = max(len(a.Filename), maxFilenameLen)
+		sizeStr := formatSize(a.Size)
+		maxSizeLen = max(len(sizeStr), maxSizeLen)
+		maxAuthorLen = max(len(a.Author.DisplayName), maxAuthorLen)
+	}
+
+	if maxFilenameLen > filenameLimit {
+		maxFilenameLen = filenameLimit
+	}
+
+	attachments.WriteString(
+		fmt.Sprintf("\n %s\n\n", coloredOut("ATTACHMENTS", color.FgWhite, color.Bold)),
+	)
+	for idx := range i.Data.Fields.Attachment {
+		a := i.Data.Fields.Attachment[idx]
+		attachments.WriteString(
+			fmt.Sprintf(
+				"  %s • %s • %s • %s\n",
+				coloredOut(shortenAndPad(a.Filename, maxFilenameLen), color.FgGreen, color.Bold),
+				pad(formatSize(a.Size), maxSizeLen),
+				pad(a.Author.DisplayName, maxAuthorLen),
+				cmdutil.FormatDateTimeHuman(a.Created, jira.RFC3339MilliLayout),
+			),
+		)
+	}
+
+	return attachments.String()
+}
+
 func (i Issue) comments() []issueComment {
 	total := i.Data.Fields.Comment.Total
 	comments := make([]issueComment, 0, total)
@@ -423,6 +487,12 @@ func (i Issue) comments() []issueComment {
 func (i Issue) footer() string {
 	var out strings.Builder
 
+	if len(i.Data.Fields.Attachment) > 0 {
+		if i.Display.Plain {
+			out.WriteString("\n")
+		}
+		out.WriteString(fmt.Sprintf("%s\n", gray(fmt.Sprintf("Download attachments: jira issue attachment download %s ATTACHMENT-ID", i.Data.Key))))
+	}
 	nc := int(i.Options.NumComments)
 	if i.Data.Fields.Comment.Total > 0 && nc > 0 && nc < i.Data.Fields.Comment.Total {
 		if i.Display.Plain {

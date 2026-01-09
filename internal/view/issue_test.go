@@ -75,7 +75,7 @@ func TestIssueDetailsRenderInPlainView(t *testing.T) {
 		Display: DisplayFormat{Plain: true},
 	}
 
-	expected := "🐞 Bug  ✅ Done  ⌛ Sun, 13 Dec 20  👷 Person A  🔑️ TEST-1  💭 0 comments  \U0001F9F5 0 linked\n# This is a test\n⏱️  Sun, 13 Dec 20  🔎 Person Z  🚀 High  📦 BE, FE  🏷️  None  👀 You + 3 watchers\n\n------------------------ Description ------------------------\n\nTest description\n\n\n"
+	expected := "🐞 Bug  ✅ Done  ⌛ Sun, 13 Dec 20  👷 Person A  🔑️ TEST-1  💭 0 comments  \U0001F9F5 0 linked  📎 0 attachments\n# This is a test\n⏱️  Sun, 13 Dec 20  🔎 Person Z  🚀 High  📦 BE, FE  🏷️  None  👀 You + 3 watchers\n\n------------------------ Description ------------------------\n\nTest description\n\n\n"
 	if xterm256() {
 		expected += "\x1b[38;5;242mView this issue on Jira: https://test.local/browse/TEST-1\x1b[m"
 	} else {
@@ -212,6 +212,26 @@ func TestIssueDetailsWithV2Description(t *testing.T) {
 					},
 				},
 			},
+			Attachment: []jira.Attachment{
+				{
+					ID:       "10001",
+					Filename: "screenshot.png",
+					Author:   jira.User{DisplayName: "Person A"},
+					Created:  "2024-01-15T10:30:00.000+0000",
+					Size:     262656,
+					MimeType: "image/png",
+					Content:  "https://test.local/attachment/10001/screenshot.png",
+				},
+				{
+					ID:       "10002",
+					Filename: "error-log.txt",
+					Author:   jira.User{DisplayName: "Person B"},
+					Created:  "2024-01-16T14:22:00.000+0000",
+					Size:     12595,
+					MimeType: "text/plain",
+					Content:  "https://test.local/attachment/10002/error-log.txt",
+				},
+			},
 			Created: "2020-12-13T14:05:20.974+0100",
 			Updated: "2020-12-13T14:07:20.974+0100",
 		},
@@ -225,11 +245,17 @@ func TestIssueDetailsWithV2Description(t *testing.T) {
 	}
 	assert.NoError(t, issue.renderPlain(&b))
 
-	expected := "🐞 Bug  ✅ Done  ⌛ Sun, 13 Dec 20  👷 Person A  🔑️ TEST-1  💭 3 comments  \U0001F9F5 2 linked\n# This is a test\n⏱️  Sun, 13 Dec 20  🔎 Person Z  🚀 High  📦 BE, FE  🏷️  None  👀 0 watchers\n\n------------------------ Description ------------------------\n\n# Title\n## Subtitle\nThis is a **bold** and _italic_ text with [a link](https://ankit.pl) in between.\n\n\n------------------------ 2 Subtasks ------------------------\n\n\n SUBTASKS\n\n  TEST-2 Subtask 1 • High   • TO DO\n  TEST-3 Subtask 2 • Normal • Done \n\n\n\n------------------------ Linked Issues ------------------------\n\n\n BLOCKS\n\n  TEST-2 Something is broken   • Bug • High   • TO DO\n\n RELATES TO\n\n  TEST-3 Everything is on fire • Bug • Urgent • Done \n\n\n\n------------------------ 3 Comments ------------------------\n\n\n Person C • Wed, 24 Nov 21 • Latest comment\n\nTest comment C\n\n\n\n Person B • Tue, 23 Nov 21\n\nTest comment B\n\n"
+	expected := "🐞 Bug  ✅ Done  ⌛ Sun, 13 Dec 20  👷 Person A  🔑️ TEST-1  💭 3 comments  \U0001F9F5 2 linked  📎 2 attachments\n# This is a test\n⏱️  Sun, 13 Dec 20  🔎 Person Z  🚀 High  📦 BE, FE  🏷️  None  👀 0 watchers\n\n------------------------ Description ------------------------\n\n# Title\n## Subtitle\nThis is a **bold** and _italic_ text with [a link](https://ankit.pl) in between.\n\n\n------------------------ 2 Subtasks ------------------------\n\n\n SUBTASKS\n\n  TEST-2 Subtask 1 • High   • TO DO\n  TEST-3 Subtask 2 • Normal • Done \n\n\n\n------------------------ Linked Issues ------------------------\n\n\n BLOCKS\n\n  TEST-2 Something is broken   • Bug • High   • TO DO\n\n RELATES TO\n\n  TEST-3 Everything is on fire • Bug • Urgent • Done \n\n\n\n------------------------ 2 Attachments ------------------------\n"
+	expected += "\n ATTACHMENTS\n\n"
+	expected += "  screenshot.png • 256.5 KB • Person A • Mon, 15 Jan 24\n"
+	expected += "  error-log.txt  • 12.3 KB  • Person B • Tue, 16 Jan 24\n"
+	expected += "\n\n------------------------ 3 Comments ------------------------\n\n\n Person C • Wed, 24 Nov 21 • Latest comment\n\nTest comment C\n\n\n\n Person B • Tue, 23 Nov 21\n\nTest comment B\n\n"
 	if xterm256() {
+		expected += "\x1b[38;5;242mDownload attachments: jira issue attachment download TEST-1 ATTACHMENT-ID\x1b[m\n\n"
 		expected += "\x1b[38;5;242mUse --comments <limit> with `jira issue view` to load more comments\x1b[m\n\n"
 		expected += "\x1b[38;5;242mView this issue on Jira: https://test.local/browse/TEST-1\x1b[m"
 	} else {
+		expected += "\x1b[0;90mDownload attachments: jira issue attachment download TEST-1 ATTACHMENT-ID\x1b[0m\n\n"
 		expected += "\x1b[0;90mUse --comments <limit> with `jira issue view` to load more comments\x1b[0m\n\n"
 		expected += "\x1b[0;90mView this issue on Jira: https://test.local/browse/TEST-1\x1b[0m"
 	}
