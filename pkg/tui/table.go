@@ -42,6 +42,10 @@ type CopyFunc func(row, column int, data interface{})
 // CopyKeyFunc is fired when a user press 'CTRL+K' character in the table cell.
 type CopyKeyFunc func(row, column int, data interface{})
 
+// DownloadFunc is fired when user presses ENTER in download-enabled views (like attachments).
+// It returns a function to execute during screen suspension, or nil to skip.
+type DownloadFunc func(row, col int, data interface{}) func()
+
 // TableData is the data to be displayed in a table.
 type TableData [][]string
 
@@ -102,6 +106,7 @@ type Table struct {
 	refreshFunc  RefreshFunc
 	copyFunc     CopyFunc
 	copyKeyFunc  CopyKeyFunc
+	downloadFunc DownloadFunc
 }
 
 // TableOption is a functional option to wrap table properties.
@@ -214,6 +219,14 @@ func WithCopyKeyFunc(fn CopyKeyFunc) TableOption {
 	}
 }
 
+// WithDownloadFunc sets a handler for ENTER key that downloads/processes the selected item.
+// The returned function runs while the screen is suspended. Takes precedence over SelectedFunc.
+func WithDownloadFunc(fn DownloadFunc) TableOption {
+	return func(t *Table) {
+		t.downloadFunc = fn
+	}
+}
+
 // WithFixedColumns sets the number of columns that are locked (do not scroll right).
 func WithFixedColumns(cols uint) TableOption {
 	return func(t *Table) {
@@ -232,11 +245,24 @@ func (t *Table) Paint(data TableData) error {
 }
 
 func (t *Table) render(data TableData) {
-	if t.selectedFunc != nil {
-		t.view.SetSelectedFunc(func(r, c int) {
+	t.view.SetSelectedFunc(func(r, c int) {
+		// DownloadFunc takes precedence over SelectedFunc
+		if t.downloadFunc != nil {
+			downloadFn := t.downloadFunc(r, c, data)
+			if downloadFn != nil {
+				go func() {
+					t.painter.ShowPage("secondary")
+					defer t.painter.HidePage("secondary")
+					t.screen.Suspend(downloadFn)
+					t.screen.Draw()
+				}()
+			}
+			return
+		}
+		if t.selectedFunc != nil {
 			t.selectedFunc(r, c, data)
-		})
-	}
+		}
+	})
 	renderTableHeader(t, data[0])
 	renderTableCell(t, data)
 }

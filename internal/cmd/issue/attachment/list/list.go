@@ -64,14 +64,16 @@ func listAttachments(cmd *cobra.Command, args []string) {
 	cmdutil.ExitIfError(err)
 
 	v := view.AttachmentList{
-		Server: viper.GetString("server"),
-		Data:   attachments.([]*jira.Attachment),
+		Server:   viper.GetString("server"),
+		IssueKey: params.issueKey,
+		Data:     attachments.([]*jira.Attachment),
 		Display: view.DisplayFormat{
 			Plain:     params.plain,
 			NoHeaders: params.noHeaders,
 			Columns:   params.columns,
 			Timezone:  viper.GetString("timezone"),
 		},
+		Refresh: func() { listAttachments(cmd, args) },
 	}
 
 	cmdutil.ExitIfError(v.RenderInTable())

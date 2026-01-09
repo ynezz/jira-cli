@@ -560,7 +560,16 @@ $ jira issue worklog add ISSUE-1 "10m" --comment "This is a comment" --no-input
 The `attachment` command provides a list of sub-commands to manage issue attachments.
 
 ##### List
-The `list` command lets you list all attachments on an issue.
+The `list` command lets you list all attachments on an issue. By default, attachments are displayed in an interactive table view.
+
+**Interactive mode navigation:**
+- Use arrow keys or `j, k, h, l` to navigate through the list.
+- Press `ENTER` to download the selected attachment.
+- Press `c` to copy attachment URL to the system clipboard.
+- Press `CTRL + k` to copy attachment ID to the system clipboard.
+- Press `CTRL + r` or `F5` to refresh the list.
+- Press `?` to view help.
+- Press `q` / `ESC` / `CTRL + c` to quit.
 
 ```sh
 # List attachments on an issue
