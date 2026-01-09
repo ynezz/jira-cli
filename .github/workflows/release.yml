@@ -1,6 +1,13 @@
 name: Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      snapshot:
+        description: 'Run in snapshot mode (no release, just build test)'
+        required: false
+        default: 'true'
+        type: boolean
   push:
     tags:
       - 'v*'
@@ -26,6 +33,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: '~> v2'
-          args: release --clean
+          args: ${{ github.event_name == 'workflow_dispatch' && inputs.snapshot && 'release --snapshot --clean' || 'release --clean' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
