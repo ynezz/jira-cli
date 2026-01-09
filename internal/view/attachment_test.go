@@ -212,3 +212,131 @@ func TestAttachmentListEmptyData(t *testing.T) {
 	assert.Len(t, data, 1)
 	assert.Equal(t, []string{"ID", "FILENAME", "SIZE", "AUTHOR", "CREATED", "MIMETYPE"}, data[0])
 }
+
+func TestAttachmentListTableDataWithAllInvalidColumns(t *testing.T) {
+	t.Parallel()
+
+	attachments := []*jira.Attachment{
+		{
+			ID:       "10000",
+			Filename: "test.txt",
+			Author:   jira.User{DisplayName: "Test User"},
+			Created:  "2024-01-15T10:30:00.000+0000",
+			Size:     1024,
+			MimeType: "text/plain",
+		},
+	}
+
+	list := &AttachmentList{
+		Server: "https://example.atlassian.net",
+		Data:   attachments,
+		Display: DisplayFormat{
+			Plain:     false,
+			NoHeaders: false,
+			Columns:   []string{"invalid", "bad", "wrong"},
+		},
+	}
+
+	data := list.tableData()
+
+	// Should fallback to all valid columns
+	assert.Len(t, data, 2)
+	assert.Equal(t, ValidAttachmentColumns(), data[0])
+	assert.Len(t, data[1], 6)
+}
+
+func TestAttachmentListTableDataWithMixedValidInvalidColumns(t *testing.T) {
+	t.Parallel()
+
+	attachments := []*jira.Attachment{
+		{
+			ID:       "10000",
+			Filename: "test.txt",
+			Author:   jira.User{DisplayName: "Test User"},
+			Created:  "2024-01-15T10:30:00.000+0000",
+			Size:     1024,
+			MimeType: "text/plain",
+		},
+	}
+
+	list := &AttachmentList{
+		Server: "https://example.atlassian.net",
+		Data:   attachments,
+		Display: DisplayFormat{
+			Plain:     false,
+			NoHeaders: false,
+			Columns:   []string{"id", "invalid", "filename"},
+		},
+	}
+
+	data := list.tableData()
+
+	// Should only include valid columns (id, filename), invalid is silently ignored
+	assert.Len(t, data, 2)
+	assert.Equal(t, []string{"ID", "FILENAME"}, data[0])
+	assert.Len(t, data[1], 2)
+	assert.Equal(t, "10000", data[1][0])
+	assert.Equal(t, "test.txt", data[1][1])
+}
+
+func TestAttachmentListTableDataWithCaseInsensitiveColumns(t *testing.T) {
+	t.Parallel()
+
+	attachments := []*jira.Attachment{
+		{
+			ID:       "10000",
+			Filename: "test.txt",
+			Author:   jira.User{DisplayName: "Test User"},
+			Created:  "2024-01-15T10:30:00.000+0000",
+			Size:     1024,
+			MimeType: "text/plain",
+		},
+	}
+
+	list := &AttachmentList{
+		Server: "https://example.atlassian.net",
+		Data:   attachments,
+		Display: DisplayFormat{
+			Plain:     false,
+			NoHeaders: false,
+			Columns:   []string{"ID", "FileName", "SIZE"},
+		},
+	}
+
+	data := list.tableData()
+
+	// Column names should be normalized to uppercase
+	assert.Len(t, data, 2)
+	assert.Equal(t, []string{"ID", "FILENAME", "SIZE"}, data[0])
+}
+
+func TestAttachmentListPlainNoHeadersWithAllInvalidColumns(t *testing.T) {
+	t.Parallel()
+
+	attachments := []*jira.Attachment{
+		{
+			ID:       "10000",
+			Filename: "test.txt",
+			Author:   jira.User{DisplayName: "Test User"},
+			Created:  "2024-01-15T10:30:00.000+0000",
+			Size:     1024,
+			MimeType: "text/plain",
+		},
+	}
+
+	list := &AttachmentList{
+		Server: "https://example.atlassian.net",
+		Data:   attachments,
+		Display: DisplayFormat{
+			Plain:     true,
+			NoHeaders: true,
+			Columns:   []string{"invalid"},
+		},
+	}
+
+	data := list.tableData()
+
+	// Should have 1 data row (no header), using all valid columns as fallback
+	assert.Len(t, data, 1)
+	assert.Len(t, data[0], 6)
+}

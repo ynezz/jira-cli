@@ -1,6 +1,9 @@
 package list
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -41,7 +44,7 @@ func NewCmdAttachmentList() *cobra.Command {
 
 	cmd.Flags().Bool("plain", false, "Display output in plain text format")
 	cmd.Flags().Bool("no-headers", false, "Don't print headers in plain text output")
-	cmd.Flags().StringArray("columns", []string{}, "Columns to display (ID, FILENAME, SIZE, AUTHOR, CREATED, MIMETYPE)")
+	cmd.Flags().String("columns", "", fmt.Sprintf("Comma separated list of columns to display.\nAccepts: %s", strings.Join(view.ValidAttachmentColumns(), ", ")))
 
 	return &cmd
 }
@@ -103,8 +106,13 @@ func parseArgsAndFlags(args []string, flags query.FlagParser) *listParams {
 	noHeaders, err := flags.GetBool("no-headers")
 	cmdutil.ExitIfError(err)
 
-	columns, err := flags.GetStringArray("columns")
+	columnsStr, err := flags.GetString("columns")
 	cmdutil.ExitIfError(err)
+
+	var columns []string
+	if columnsStr != "" {
+		columns = strings.Split(columnsStr, ",")
+	}
 
 	return &listParams{
 		issueKey:  issueKey,

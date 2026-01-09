@@ -108,12 +108,16 @@ func (al *AttachmentList) tableData() tui.TableData {
 	var data tui.TableData
 
 	headers := al.tableHeader()
-	if !(al.Display.Plain && al.Display.NoHeaders) {
-		data = append(data, headers)
-	}
+
+	// Fallback to all valid columns if no valid columns were specified
 	if len(headers) == 0 {
 		headers = ValidAttachmentColumns()
 	}
+
+	if !(al.Display.Plain && al.Display.NoHeaders) {
+		data = append(data, headers)
+	}
+
 	for _, a := range al.Data {
 		data = append(data, al.assignColumns(headers, a))
 	}
