@@ -168,6 +168,61 @@ func TestNormalizeJiraError(t *testing.T) {
 	}
 }
 
+func TestReadFile(t *testing.T) {
+	t.Parallel()
+
+	t.Run("reads contents from a regular file", func(t *testing.T) {
+		t.Parallel()
+
+		// Create a temporary file with test content
+		tmpFile, err := os.CreateTemp("", "test-*.txt")
+		assert.NoError(t, err)
+		defer func() { _ = os.Remove(tmpFile.Name()) }()
+
+		testContent := "line 1\nline 2\nline 3"
+		_, err = tmpFile.WriteString(testContent)
+		assert.NoError(t, err)
+		_ = tmpFile.Close()
+
+		// Read the file using ReadFile
+		content, err := ReadFile(tmpFile.Name())
+		assert.NoError(t, err)
+		assert.Equal(t, testContent, string(content))
+	})
+
+	t.Run("reads multi-line content from file", func(t *testing.T) {
+		t.Parallel()
+
+		tmpFile, err := os.CreateTemp("", "test-multiline-*.md")
+		assert.NoError(t, err)
+		defer func() { _ = os.Remove(tmpFile.Name()) }()
+
+		testContent := `## Test Description
+
+This is a multi-line description.
+
+- Item 1
+- Item 2
+
+Some more text.`
+		_, err = tmpFile.WriteString(testContent)
+		assert.NoError(t, err)
+		_ = tmpFile.Close()
+
+		content, err := ReadFile(tmpFile.Name())
+		assert.NoError(t, err)
+		assert.Equal(t, testContent, string(content))
+	})
+
+	t.Run("returns error for non-existent file", func(t *testing.T) {
+		t.Parallel()
+
+		content, err := ReadFile("/nonexistent/path/to/file.txt")
+		assert.Error(t, err)
+		assert.Nil(t, content)
+	})
+}
+
 func TestGetSubtaskHandle(t *testing.T) {
 	t.Parallel()
 
