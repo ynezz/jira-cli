@@ -18,4 +18,8 @@ const (
 	fieldEndDate      = "END"
 	fieldCompleteDate = "COMPLETE"
 	fieldLabels       = "LABELS"
+	fieldFilename     = "FILENAME"
+	fieldSize         = "SIZE"
+	fieldMimeType     = "MIMETYPE"
+	fieldAuthor       = "AUTHOR"
 )

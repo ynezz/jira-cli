@@ -556,6 +556,71 @@ $ jira issue worklog add ISSUE-1 "2d 3h 30m" --no-input
 $ jira issue worklog add ISSUE-1 "10m" --comment "This is a comment" --no-input
 ```
 
+#### Attachment
+The `attachment` command provides a list of sub-commands to manage issue attachments.
+
+##### List
+The `list` command lets you list all attachments on an issue.
+
+```sh
+# List attachments on an issue
+$ jira issue attachment list ISSUE-1
+
+# List attachments in plain text format
+$ jira issue attachment list ISSUE-1 --plain
+
+# List attachments without headers
+$ jira issue attachment list ISSUE-1 --plain --no-headers
+
+# List specific columns
+$ jira issue attachment list ISSUE-1 --columns id,filename,size
+```
+
+##### Add
+The `add` command lets you upload file(s) as attachments to an issue.
+
+```sh
+# Add a single file attachment
+$ jira issue attachment add ISSUE-1 --file /path/to/file.txt
+
+# Add multiple files at once
+$ jira issue attachment add ISSUE-1 --file file1.txt --file file2.png
+
+# Open issue in browser after uploading
+$ jira issue attachment add ISSUE-1 --file /path/to/file.txt --web
+```
+
+##### Download
+The `download` command lets you download attachment(s) from an issue.
+
+```sh
+# Download a specific attachment by ID
+$ jira issue attachment download ISSUE-1 10000
+
+# Download to a specific file path
+$ jira issue attachment download ISSUE-1 10000 --output /path/to/file.txt
+
+# Download all attachments from an issue
+$ jira issue attachment download ISSUE-1 --all
+
+# Download all attachments to a specific directory
+$ jira issue attachment download ISSUE-1 --all --output-dir /path/to/dir
+
+# Overwrite existing files
+$ jira issue attachment download ISSUE-1 --all --overwrite
+```
+
+##### Remove
+The `remove` command lets you delete an attachment from an issue.
+
+```sh
+# Remove an attachment by ID
+$ jira issue attachment remove 10000
+
+# Remove without confirmation prompt
+$ jira issue attachment remove 10000 --force
+```
+
 ### Epic
 Epics are displayed in an explorer view by default. You can output the results in a table view using the `--table` flag.
 When viewing epic issues, you can use all filters available for the issue command.

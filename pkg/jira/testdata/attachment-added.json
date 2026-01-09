@@ -1,0 +1,15 @@
+[
+  {
+    "id": "10002",
+    "filename": "uploaded.txt",
+    "author": {
+      "accountId": "abc123",
+      "displayName": "Test User",
+      "active": true
+    },
+    "created": "2024-01-17T12:00:00.000+0000",
+    "size": 512,
+    "mimeType": "text/plain",
+    "content": "https://example.atlassian.net/secure/attachment/10002/uploaded.txt"
+  }
+]

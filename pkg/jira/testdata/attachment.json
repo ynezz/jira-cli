@@ -1,0 +1,32 @@
+{
+  "fields": {
+    "attachment": [
+      {
+        "id": "10000",
+        "filename": "test.txt",
+        "author": {
+          "accountId": "abc123",
+          "displayName": "Test User",
+          "active": true
+        },
+        "created": "2024-01-15T10:30:00.000+0000",
+        "size": 1024,
+        "mimeType": "text/plain",
+        "content": "https://example.atlassian.net/secure/attachment/10000/test.txt"
+      },
+      {
+        "id": "10001",
+        "filename": "image.png",
+        "author": {
+          "accountId": "abc123",
+          "displayName": "Test User",
+          "active": true
+        },
+        "created": "2024-01-16T11:00:00.000+0000",
+        "size": 2048,
+        "mimeType": "image/png",
+        "content": "https://example.atlassian.net/secure/attachment/10001/image.png"
+      }
+    ]
+  }
+}

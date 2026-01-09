@@ -1,0 +1,974 @@
+
+╭─── Claude Code v2.1.2 ───────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│                 Welcome back Lord!                 │ started                 │
+│                                                    │ Run /init to create a … │
+│                       ▐▛███▜▌                      │ ─────────────────────── │
+│                      ▝▜█████▛▘                     │ Recent activity         │
+│                        ▘▘ ▝▝                       │ No recent activity      │
+│                                                    │                         │
+│      Opus 4.5 · Claude Max ·                       │                         │
+│      vendulkapetr1922@gmail.com's Organization     │                         │
+│                  ~/dev/go/jira-cli                 │                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+❯ can I CRUD attachments to the issue/work items? 
+
+● I'll explore the codebase to understand the current attachment functionality.
+
+● Explore(Find attachment CRUD support)
+  ⎿  Done (36 tool uses · 53.5k tokens · 2m 54s)                           
+
+● Based on my exploration of the codebase, no attachment CRUD operations are currently supported in this jira-cli tool.
+
+  Current State
+
+  The only attachment-related code is minimal rendering support in the ADF (Atlassian Document Format) parser, which displays [attachment] as placeholder text when viewing issue descriptions. There are:
+
+  - No CLI commands for attachments
+  - No API client methods for attachment operations
+  - No Attachments field in the Issue struct
+
+  What Would Be Needed for Full CRUD
+  ┌─────────────┬───────────────────────┬──────────────────────────────────────┐
+  │  Operation  │        Command        │          Jira API Endpoint           │
+  ├─────────────┼───────────────────────┼──────────────────────────────────────┤
+  │             │ jira issue attachment │ POST                                 │
+  │ Create      │  add <KEY> --file     │ /rest/api/3/issue/{key}/attachments  │
+  │             │ <path>                │                                      │
+  ├─────────────┼───────────────────────┼──────────────────────────────────────┤
+  │ Read (list) │ jira issue attachment │ GET via issue fields                 │
+  │             │  list <KEY>           │                                      │
+  ├─────────────┼───────────────────────┼──────────────────────────────────────┤
+  │ Read        │ jira issue attachment │ GET attachment content URL           │
+  │ (download)  │  download <KEY> <ID>  │                                      │
+  ├─────────────┼───────────────────────┼──────────────────────────────────────┤
+  │ Delete      │ jira issue attachment │ DELETE /rest/api/3/attachment/{id}   │
+  │             │  delete <KEY> <ID>    │                                      │
+  └─────────────┴───────────────────────┴──────────────────────────────────────┘
+  Key Files That Would Need Changes
+
+  - pkg/jira/types.go - Add Attachment struct
+  - pkg/jira/attachment.go - New file for API operations (multipart upload, download)
+  - internal/cmd/issue/attachment/ - New command directory with add/list/delete/download subcommands
+  - internal/cmd/issue/issue.go - Register the attachment subcommand
+
+  Would you like me to plan the implementation of attachment CRUD support for this CLI?
+
+✻ Cooked for 1m 29s
+
+❯ yes, provide the plan 
+
+● I'll explore the codebase patterns to create a detailed implementation plan.
+
+● 2 Explore agents finished (ctrl+o to expand)
+   ├─ Explore command patterns · 28 tool uses · 41.4k tokens
+   │  ⎿  Done
+   └─ Explore API client patterns · 23 tool uses · 50.3k tokens
+      ⎿  Done
+
+● Now I have a thorough understanding of the codebase patterns. Let me design the implementation plan.
+
+● Plan(Design attachment CRUD plan)
+  ⎿  Done (30 tool uses · 85.7k tokens · 1m 54s)                           
+
+● I have all the information needed. Let me write the final plan to the plan file.
+
+● Updated plan
+  ⎿  Wrote 169 lines to                                                    
+     ../../../.claude/plans/glistening-forging-sedgewick.md
+     # Attachment CRUD Implementation Plan for jira-cli
+     ## Overview
+     Add attachment management commands to jira-cli with full CRUD support:
+     - `jira issue attachment add` - Upload file(s) to an issue
+     - `jira issue attachment list` - List attachments on an issue
+     - `jira issue attachment download` - Download attachment(s)
+     - `jira issue attachment remove` - Delete an attachment
+     … +159 lines (ctrl+o to expand)
+
+● I've created a comprehensive implementation plan for attachment CRUD support. The plan covers:
+
+  - 4 new commands: add, list, download, remove under jira issue attachment
+  - New API client methods in pkg/jira/attachment.go for all CRUD operations
+  - Multipart form-data handling for file uploads (new to this codebase)
+  - Table view for listing attachments
+  - Clear implementation order starting with types, then API, then commands
+
+  The plan follows existing patterns from the comment and worklog commands.
+  ⎿  Tool use rejected with user message: I don't see tests in the plan
+
+● Let me explore the test patterns in the codebase to add a proper testing section.
+
+● Explore(Explore test patterns)
+  ⎿  Done (33 tool uses · 61.3k tokens · 1m 17s)                           
+
+● Now I'll update the plan to include the testing section.
+
+● Reading Plan(~/.claude/plans/glistening-forging-sedgewick.md)
+  ⎿  Read 169 lines
+
+● Updated plan
+  ⎿  /plan to preview                                                    
+      14                                                                 
+      15   ```                                                           
+      16   pkg/jira/attachment.go                              # API     
+          client methods                                                 
+      17 + pkg/jira/attachment_test.go                         # API     
+         +client tests                                                   
+      18 + pkg/jira/testdata/attachment.json                   # Test    
+         +fixture                                                        
+      19   internal/cmd/issue/attachment/attachment.go         # Parent  
+          command                                                        
+      20   internal/cmd/issue/attachment/add/add.go            # Upload  
+          command                                                        
+      21   internal/cmd/issue/attachment/list/list.go          # List    
+          command                                                        
+      22   internal/cmd/issue/attachment/download/download.go  #         
+          Download command                                               
+      23   internal/cmd/issue/attachment/remove/remove.go      # Delete  
+          command                                                        
+      24   internal/view/attachment.go                         # Table   
+          view rendering                                                 
+      25 + internal/view/attachment_test.go                    # View    
+         +tests                                                          
+      26   ```                                                           
+      27                                                                 
+      28   ### Files to Modify                                           
+
+● Updated plan
+  ⎿  /plan to preview                                                    
+      153                                                                
+      154   1. `pkg/jira/types.go` - Add Attachment type                 
+      155   2. `pkg/jira/attachment.go` - API methods (delete first,     
+           then list, add, download)                                     
+      156 - 3. `internal/view/attachment.go` - Table rendering           
+      157 - 4. `internal/cmd/issue/attachment/attachment.go` - Parent    
+          -command                                                       
+      158 - 5. `internal/cmd/issue/attachment/list/list.go` - Simplest   
+          -command                                                       
+      159 -6. `internal/cmd/issue/attachment/remove/remove.go`           
+      160 -7. `internal/cmd/issue/attachment/add/add.go` - Multipart     
+          -upload                                                        
+      161 -8. `internal/cmd/issue/attachment/download/download.go`       
+          - - Streaming download                                         
+      162 - 9. `internal/cmd/issue/issue.go` - Register commands         
+      156 + 3. `pkg/jira/attachment_test.go` - API tests                 
+      157 + 4. `internal/view/attachment.go` - Table rendering           
+      158 + 5. `internal/view/attachment_test.go` - View tests           
+      159 +6. `internal/cmd/issue/attachment/attachment.go`              
+          + - Parent command                                             
+      160 +7. `internal/cmd/issue/attachment/list/list.go` - Simplest    
+          +command                                                       
+      161 +8. `internal/cmd/issue/attachment/remove/remove.go`           
+      162 + 9. `internal/cmd/issue/attachment/add/add.go` - Multipart    
+          +upload                                                        
+      163 + 10. `internal/cmd/issue/attachment/download/download.go` -   
+          +Streaming download                                            
+      164 + 11. `internal/cmd/issue/issue.go` - Register commands        
+      165                                                                
+      166 + ## Testing                                                   
+      167 +                                                              
+      168 + ### Test File Structure                                      
+      169 +                                                              
+      170 + | File | Purpose |                                           
+      171 + |------|---------|                                           
+      172 + | `pkg/jira/attachment_test.go` | API client method tests |  
+      173 + | `pkg/jira/testdata/attachment.json` | JSON fixture for     
+          +attachment response |                                         
+      174 + | `internal/view/attachment_test.go` | View rendering tests  
+          +|                                                             
+      175 +                                                              
+      176 + ### Test Patterns (follow existing codebase conventions)     
+      177 +                                                              
+      178 + **Use `httptest.NewServer` with `http.HandlerFunc`:**        
+      179 + ```go                                                        
+      180 + server := httptest.NewServer(http.HandlerFunc(func(w         
+          +http.ResponseWriter, r *http.Request) {                       
+      181 +     assert.Equal(t, "/rest/api/2/attachment/10000",          
+          +r.URL.Path)                                                   
+      182 +     assert.Equal(t, "DELETE", r.Method)                      
+      183 +     w.WriteHeader(204)                                       
+      184 + }))                                                          
+      185 + defer server.Close()                                         
+      186 +                                                              
+      187 + client := NewClient(Config{Server: server.URL},              
+          +WithTimeout(3*time.Second))                                   
+      188 + ```                                                          
+      189 +                                                              
+      190 + **Use `stretchr/testify/assert` for assertions.**            
+      191 +                                                              
+      192 + ### API Tests (`pkg/jira/attachment_test.go`)                
+      193 +                                                              
+      194 + **TestDeleteAttachment:**                                    
+      195 + - Assert DELETE to `/rest/api/2/attachment/{id}`             
+      196 + - Test 204 success response                                  
+      197 + - Test error response (400/404)                              
+      198 +                                                              
+      199 + **TestGetAttachments:**                                      
+      200 + - Assert GET to `/rest/api/2/issue/{key}?fields=attachment`  
+      201 + - Return fixture from `testdata/attachment.json`             
+      202 + - Parse and validate response struct                         
+      203 +                                                              
+      204 + **TestAddAttachment:**                                       
+      205 + - Assert POST to `/rest/api/2/issue/{key}/attachments`       
+      206 + - Parse multipart form: `r.ParseMultipartForm(32 << 20)`     
+      207 + - Validate file field: `r.FormFile("file")`                  
+      208 + - Assert `X-Atlassian-Token: no-check` header                
+      209 + - Test success (200) and error cases                         
+      210 +                                                              
+      211 + **TestDownloadAttachment:**                                  
+      212 + - Assert GET to `/rest/api/2/attachment/content/{id}`        
+      213 + - Return binary content                                      
+      214 + - Verify file written to destination                         
+      215 +                                                              
+      216 + ### Test Fixture (`pkg/jira/testdata/attachment.json`)       
+      217 +                                                              
+      218 + ```json                                                      
+      219 + [{                                                           
+      220 +   "id": "10000",                                             
+      221 +   "filename": "test.txt",                                    
+      222 +   "author": {                                                
+      223 +     "accountId": "abc123",                                   
+      224 +     "displayName": "Test User",                              
+      225 +     "active": true                                           
+      226 +   },                                                         
+      227 +   "created": "2024-01-15T10:30:00.000+0000",                 
+      228 +   "size": 1024,                                              
+      229 +   "mimeType": "text/plain",                                  
+      230 +   "content": "https://example.atlassian.net/secure/attachmen 
+          +t/10000/test.txt"                                             
+      231 + }]                                                           
+      232 + ```                                                          
+      233 +                                                              
+      234 + ### View Tests (`internal/view/attachment_test.go`)          
+      235 +                                                              
+      236 + - Test table rendering with sample attachment data           
+      237 + - Test plain text output format                              
+      238 + - Test empty attachment list handling                        
+      239 +                                                              
+      240   ## Verification                                              
+      241                                                                
+      242   1. Build: `go build ./...`                                   
+
+● Updated plan
+  ⎿  /plan to preview                                                    
+      239                                                                
+      240   ## Verification                                              
+      241                                                                
+      242 - 1. Build: `go build ./...`                                   
+      243 - 2. Test add: `jira issue attachment add TEST-1 --file        
+          -./test.txt`                                                   
+      244 - 3. Test list: `jira issue attachment list TEST-1`            
+      245 - 4. Test download: `jira issue attachment download TEST-1     
+          -<ID> -o ./downloaded.txt`                                     
+      246 - 5. Test remove: `jira issue attachment remove <ID>`          
+      247 - 6. Run tests: `go test ./...`                                
+      242 + ### Unit Tests                                               
+      243 + ```bash                                                      
+      244 + go test ./pkg/jira/... -v -run Attachment                    
+      245 + go test ./internal/view/... -v -run Attachment               
+      246 + ```                                                          
+      247 +                                                              
+      248 + ### Full Test Suite                                          
+      249 + ```bash                                                      
+      250 + go test ./...                                                
+      251 + ```                                                          
+      252 +                                                              
+      253 + ### Build                                                    
+      254 + ```bash                                                      
+      255 + go build ./...                                               
+      256 + ```                                                          
+      257 +                                                              
+      258 + ### Manual Testing (requires configured Jira instance)       
+      259 + ```bash                                                      
+      260 + # List attachments                                           
+      261 + jira issue attachment list TEST-1                            
+      262 +                                                              
+      263 + # Add attachment                                             
+      264 + jira issue attachment add TEST-1 --file ./test.txt           
+      265 +                                                              
+      266 + # Download attachment                                        
+      267 + jira issue attachment download TEST-1 <ATTACHMENT-ID> -o     
+          +./downloaded.txt                                              
+      268 +                                                              
+      269 + # Remove attachment                                          
+      270 + jira issue attachment remove <ATTACHMENT-ID>                 
+      271 + ```                                                          
+
+● I've updated the plan to include comprehensive testing:
+
+  Added to the plan:
+  - Test files in the file structure (attachment_test.go, testdata/attachment.json)
+  - Tests included in implementation order (steps 3 and 5)
+  - New Testing section with:
+    - Test patterns following httptest.NewServer convention
+    - Specific test cases for each API method (delete, get, add, download)
+    - JSON fixture example
+    - View tests
+  - Updated Verification section with unit test commands
+                                                                           
+● User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/glistening-forging-sedgewick.md · /plan 
+     to edit
+
+     Attachment CRUD Implementation Plan for jira-cli
+
+     Overview
+
+     Add attachment management commands to jira-cli with full CRUD support:
+     - jira issue attachment add - Upload file(s) to an issue
+     - jira issue attachment list - List attachments on an issue
+     - jira issue attachment download - Download attachment(s)
+     - jira issue attachment remove - Delete an attachment
+
+     File Structure
+
+     New Files to Create
+
+     pkg/jira/attachment.go                              # API client
+     methods
+     pkg/jira/attachment_test.go                         # API client tests
+     pkg/jira/testdata/attachment.json                   # Test fixture
+     internal/cmd/issue/attachment/attachment.go         # Parent command
+     internal/cmd/issue/attachment/add/add.go            # Upload command
+     internal/cmd/issue/attachment/list/list.go          # List command
+     internal/cmd/issue/attachment/download/download.go  # Download command
+     internal/cmd/issue/attachment/remove/remove.go      # Delete command
+     internal/view/attachment.go                         # Table view
+     rendering
+     internal/view/attachment_test.go                    # View tests
+
+     Files to Modify
+
+     - pkg/jira/types.go - Add Attachment type and field to IssueFields
+     - pkg/jira/client.go - Add multipart POST method for file uploads
+     - internal/cmd/issue/issue.go - Register attachment subcommand
+
+     Implementation Steps
+
+     Phase 1: API Layer
+
+     1.1 Add types to pkg/jira/types.go
+
+     // Attachment holds attachment metadata
+     type Attachment struct {
+         ID       string `json:"id"`
+         Filename string `json:"filename"`
+         Author   User   `json:"author"`
+         Created  string `json:"created"`
+         Size     int64  `json:"size"`
+         MimeType string `json:"mimeType"`
+         Content  string `json:"content"`  // Download URL
+     }
+
+     Add to IssueFields struct:
+     Attachment []Attachment `json:"attachment"`
+
+     1.2 Create pkg/jira/attachment.go
+
+     Methods to implement:
+     Method: AddAttachment(key, filePath string)
+     Jira API: POST /issue/{key}/attachments
+     Notes: Multipart form-data, X-Atlassian-Token: no-check header
+     ────────────────────────────────────────
+     Method: GetAttachments(key string)
+     Jira API: GET /issue/{key}?fields=attachment
+     Notes: Extract from issue fields
+     ────────────────────────────────────────
+     Method: DownloadAttachment(id, destPath string)
+     Jira API: GET /attachment/content/{id}
+     Notes: Stream to file
+     ────────────────────────────────────────
+     Method: DeleteAttachment(id string)
+     Jira API: DELETE /attachment/{id}
+     Notes: Returns 204
+     1.3 Add multipart support to pkg/jira/client.go
+
+     Add method for multipart/form-data POST requests (required for file
+     uploads).
+
+     Phase 2: View Layer
+
+     2.1 Create internal/view/attachment.go
+
+     Table columns: ID, FILENAME, SIZE, AUTHOR, CREATED, MIMETYPE
+
+     Follow pattern from internal/view/sprint.go.
+
+     Phase 3: Commands
+
+     3.1 Parent command internal/cmd/issue/attachment/attachment.go
+
+     jira issue attachment [command]
+
+     Commands:
+       add       Add attachment(s) to an issue
+       list      List attachments on an issue
+       download  Download attachment(s) from an issue
+       remove    Remove an attachment
+
+     Aliases: attachments, att
+
+     3.2 Add command
+
+     jira issue attachment add ISSUE-KEY --file path/to/file [--file
+     another/file]
+
+     Flags:
+     - --file, -f (required, repeatable) - File path(s) to upload
+
+     3.3 List command
+
+     jira issue attachment list ISSUE-KEY [--plain] [--no-headers]
+
+     Flags:
+     - --plain - Plain text output
+     - --no-headers - Skip column headers
+
+     3.4 Download command
+
+     jira issue attachment download ISSUE-KEY ATTACHMENT-ID [--output file]
+     jira issue attachment download ISSUE-KEY --all [--output-dir dir]
+
+     Flags:
+     - --output, -o - Output file path
+     - --output-dir, -d - Output directory (with --all)
+     - --all - Download all attachments
+     - --overwrite - Overwrite existing files
+
+     3.5 Remove command
+
+     jira issue attachment remove ATTACHMENT-ID [--force]
+
+     Flags:
+     - --force, -f - Skip confirmation prompt
+
+     Phase 4: Integration
+
+     4.1 Register in internal/cmd/issue/issue.go
+
+     Import and add attachment.NewCmdAttachment() to cmd.AddCommand().
+
+     Key Patterns to Follow
+
+     - Command structure: Follow internal/cmd/issue/comment/add/add.go
+     - API methods: Follow pkg/jira/delete.go and pkg/jira/issue.go
+     - View rendering: Follow internal/view/sprint.go
+     - Error handling: Use cmdutil.ExitIfError(), cmdutil.Failed()
+     - Progress indicators: Use cmdutil.Info() for spinners
+
+     Implementation Order
+
+     1. pkg/jira/types.go - Add Attachment type
+     2. pkg/jira/attachment.go - API methods (delete first, then list, add,
+     download)
+     3. pkg/jira/attachment_test.go - API tests
+     4. internal/view/attachment.go - Table rendering
+     5. internal/view/attachment_test.go - View tests
+     6. internal/cmd/issue/attachment/attachment.go - Parent command
+     7. internal/cmd/issue/attachment/list/list.go - Simplest command
+     8. internal/cmd/issue/attachment/remove/remove.go
+     9. internal/cmd/issue/attachment/add/add.go - Multipart upload
+     10. internal/cmd/issue/attachment/download/download.go - Streaming
+     download
+     11. internal/cmd/issue/issue.go - Register commands
+
+     Testing
+
+     Test File Structure
+
+     ┌───────────────────────────────────┬──────────────────────────────────
+     ────┐
+     │               File                │               Purpose
+         │
+     ├───────────────────────────────────┼──────────────────────────────────
+     ────┤
+     │ pkg/jira/attachment_test.go       │ API client method tests
+         │
+     ├───────────────────────────────────┼──────────────────────────────────
+     ────┤
+     │ pkg/jira/testdata/attachment.json │ JSON fixture for attachment
+     response │
+     ├───────────────────────────────────┼──────────────────────────────────
+     ────┤
+     │ internal/view/attachment_test.go  │ View rendering tests
+         │
+     └───────────────────────────────────┴──────────────────────────────────
+     ────┘
+
+
+
+     Test Patterns (follow existing codebase conventions)
+
+     Use httptest.NewServer with http.HandlerFunc:
+     server := httptest.NewServer(http.HandlerFunc(func(w 
+     http.ResponseWriter, r *http.Request) {
+         assert.Equal(t, "/rest/api/2/attachment/10000", r.URL.Path)
+         assert.Equal(t, "DELETE", r.Method)
+         w.WriteHeader(204)
+     }))
+     defer server.Close()
+
+     client := NewClient(Config{Server: server.URL},
+     WithTimeout(3*time.Second))
+
+     Use stretchr/testify/assert for assertions.
+
+     API Tests (pkg/jira/attachment_test.go)
+
+     TestDeleteAttachment:
+     - Assert DELETE to /rest/api/2/attachment/{id}
+     - Test 204 success response
+     - Test error response (400/404)
+
+     TestGetAttachments:
+     - Assert GET to /rest/api/2/issue/{key}?fields=attachment
+     - Return fixture from testdata/attachment.json
+     - Parse and validate response struct
+
+     TestAddAttachment:
+     - Assert POST to /rest/api/2/issue/{key}/attachments
+     - Parse multipart form: r.ParseMultipartForm(32 << 20)
+     - Validate file field: r.FormFile("file")
+     - Assert X-Atlassian-Token: no-check header
+     - Test success (200) and error cases
+
+     TestDownloadAttachment:
+     - Assert GET to /rest/api/2/attachment/content/{id}
+     - Return binary content
+     - Verify file written to destination
+
+     Test Fixture (pkg/jira/testdata/attachment.json)
+
+     [{
+       "id": "10000",
+       "filename": "test.txt",
+       "author": {
+         "accountId": "abc123",
+         "displayName": "Test User",
+         "active": true
+       },
+       "created": "2024-01-15T10:30:00.000+0000",
+       "size": 1024,
+       "mimeType": "text/plain",
+       "content":
+     "https://example.atlassian.net/secure/attachment/10000/test.txt"
+     }]
+
+     View Tests (internal/view/attachment_test.go)
+
+     - Test table rendering with sample attachment data
+     - Test plain text output format
+     - Test empty attachment list handling
+
+     Verification
+
+     Unit Tests
+
+     go test ./pkg/jira/... -v -run Attachment
+     go test ./internal/view/... -v -run Attachment
+
+     Full Test Suite
+
+     go test ./...
+
+     Build
+
+     go build ./...
+
+     Manual Testing (requires configured Jira instance)
+
+     # List attachments
+     jira issue attachment list TEST-1
+
+     # Add attachment
+     jira issue attachment add TEST-1 --file ./test.txt
+
+     # Download attachment
+     jira issue attachment download TEST-1 <ATTACHMENT-ID> -o
+     ./downloaded.txt
+
+     # Remove attachment
+     jira issue attachment remove <ATTACHMENT-ID>
+
+● I'll start implementing the attachment CRUD feature. Let me set up my task tracking and begin with the API layer.
+
+● Read(pkg/jira/types.go)
+  ⎿  Read 194 lines
+
+● Read(pkg/jira/issue.go)
+  ⎿  Read 512 lines
+
+● Read(pkg/jira/delete.go)
+  ⎿  Read 30 lines
+
+● Read(pkg/jira/client.go)
+  ⎿  Read 323 lines
+
+● Now I have a clear understanding of the patterns. Let me start implementing. First, I'll add the Attachment type and update IssueFields.
+
+● Update(pkg/jira/types.go)
+  ⎿  Added 11 lines                                                      
+      191     DisplayName string `json:"displayName"`                    
+      192     Active      bool   `json:"active"`                         
+      193   }                                                            
+      194 +                                                              
+      195 + // Attachment holds attachment metadata.                     
+      196 + type Attachment struct {                                     
+      197 +   ID       string `json:"id"`                                
+      198 +   Filename string `json:"filename"`                          
+      199 +   Author   User   `json:"author"`                            
+      200 +   Created  string `json:"created"`                           
+      201 +   Size     int64  `json:"size"`                              
+      202 +   MimeType string `json:"mimeType"`                          
+      203 +   Content  string `json:"content"` // Download URL           
+      204 + }                                                            
+
+● Update(pkg/jira/types.go)
+  ⎿  Added 1 line                                                        
+      111       } `json:"comments"`                                      
+      112       Total int `json:"total"`                                 
+      113     } `json:"comment"`                                         
+      114 +   Attachment []Attachment `json:"attachment"`                
+      115     Subtasks   []Issue                                         
+      116     IssueLinks []struct {                                      
+      117       ID       string `json:"id"`                              
+
+● Write(pkg/jira/attachment.go)
+  ⎿  Wrote 172 lines to pkg/jira/attachment.go
+     package jira
+     import (
+       "bytes"
+       "context"
+       "encoding/json"
+       "fmt"
+       "io"
+       "mime/multipart"
+       "net/http"
+     … +162 lines (ctrl+o to expand)
+
+● Read(pkg/jira/issue_test.go)
+  ⎿  Read 150 lines
+
+● Write(pkg/jira/testdata/attachment.json)
+  ⎿  Wrote 33 lines to pkg/jira/testdata/attachment.json
+     {
+       "fields": {
+         "attachment": [
+           {
+             "id": "10000",
+             "filename": "test.txt",
+             "author": {
+               "accountId": "abc123",
+               "displayName": "Test User",
+               "active": true
+     … +23 lines (ctrl+o to expand)
+
+● Write(pkg/jira/testdata/attachment-added.json)
+  ⎿  Wrote 16 lines to pkg/jira/testdata/attachment-added.json
+     [
+       {
+         "id": "10002",
+         "filename": "uploaded.txt",
+         "author": {
+           "accountId": "abc123",
+           "displayName": "Test User",
+           "active": true
+         },
+         "created": "2024-01-17T12:00:00.000+0000",
+     … +6 lines (ctrl+o to expand)
+
+● Write(pkg/jira/attachment_test.go)
+  ⎿  Wrote 184 lines to pkg/jira/attachment_test.go
+     package jira
+     import (
+       "net/http"
+       "net/http/httptest"
+       "os"
+       "path/filepath"
+       "testing"
+       "time"
+     … +174 lines (ctrl+o to expand)
+
+● Read(internal/view/sprint.go)
+  ⎿  Read 230 lines
+
+● Read(internal/view/helper.go)
+  ⎿  Read 237 lines
+
+● Search(pattern: "^const \(", path: "internal/view")
+  ⎿  Found 2 files (ctrl+o to expand)
+
+● Read(internal/view/fields.go)
+  ⎿  Read 22 lines
+
+● Update(internal/view/fields.go)
+  ⎿  Added 4 lines                                                       
+      18     fieldEndDate      = "END"                                   
+      19     fieldCompleteDate = "COMPLETE"                              
+      20     fieldLabels       = "LABELS"                                
+      21 +   fieldFilename     = "FILENAME"                              
+      22 +   fieldSize         = "SIZE"                                  
+      23 +   fieldMimeType     = "MIMETYPE"                              
+      24 +   fieldAuthor       = "AUTHOR"                                
+      25   )                                                             
+
+● Write(internal/view/attachment.go)
+  ⎿  Wrote 145 lines to internal/view/attachment.go
+     package view
+     import (
+       "fmt"
+       "io"
+       "os"
+       "strings"
+       "text/tabwriter"
+       "github.com/ankitpokhrel/jira-cli/pkg/jira"
+     … +135 lines (ctrl+o to expand)
+
+● Read(internal/view/helper_test.go)
+  ⎿  Read 197 lines
+
+● Write(internal/view/attachment_test.go)
+  ⎿  Wrote 215 lines to internal/view/attachment_test.go
+     package view
+     import (
+       "testing"
+       "github.com/stretchr/testify/assert"
+       "github.com/ankitpokhrel/jira-cli/pkg/jira"
+     )
+     … +205 lines (ctrl+o to expand)
+
+● Read(internal/cmd/issue/comment/comment.go)
+  ⎿  Read 29 lines
+
+● Bash(mkdir -p /var/home/ynezz/dev/go/jira-cli/internal/cmd/issue/attachment/{a
+      dd,list,download,remove})
+  ⎿  (No content)
+
+● Write(internal/cmd/issue/attachment/attachment.go)
+  ⎿  Wrote 37 lines to internal/cmd/issue/attachment/attachment.go         
+     package attachment
+     import (
+       "github.com/spf13/cobra"
+       "github.com/ankitpokhrel/jira-cli/internal/cmd/issue/attachment/add"
+       "github.com/ankitpokhrel/jira-cli/internal/cmd/issue/attachment/down
+     load"
+
+     "github.com/ankitpokhrel/jira-cli/internal/cmd/issue/attachment/list"
+       "github.com/ankitpokhrel/jira-cli/internal/cmd/issue/attachment/remo
+     ve"
+     )
+
+     … +27 lines (ctrl+o to expand)
+
+● Read(internal/cmd/issue/comment/add/add.go)
+  ⎿  Read 247 lines
+
+● Write(internal/cmd/issue/attachment/list/list.go)
+  ⎿  Wrote 114 lines to internal/cmd/issue/attachment/list/list.go
+     package list
+     import (
+       "github.com/spf13/cobra"
+       "github.com/spf13/viper"
+       "github.com/ankitpokhrel/jira-cli/api"
+       "github.com/ankitpokhrel/jira-cli/internal/cmdutil"
+       "github.com/ankitpokhrel/jira-cli/internal/query"
+       "github.com/ankitpokhrel/jira-cli/internal/view"
+     … +104 lines (ctrl+o to expand)
+
+● Read(api/client.go)
+  ⎿  Read 231 lines
+
+● Update(internal/cmd/issue/attachment/list/list.go)
+  ⎿  Added 1 line                                                        
+       8     "github.com/ankitpokhrel/jira-cli/internal/cmdutil"         
+       9     "github.com/ankitpokhrel/jira-cli/internal/query"           
+      10     "github.com/ankitpokhrel/jira-cli/internal/view"            
+      11 +   "github.com/ankitpokhrel/jira-cli/pkg/jira"                 
+      12   )                                                             
+      13                                                                 
+      14   const (                                                       
+
+● Update(internal/cmd/issue/attachment/list/list.go)
+  ⎿  Added 1 line, removed 1 line                                        
+      65                                                                 
+      66     v := view.AttachmentList{                                   
+      67       Server: viper.GetString("server"),                        
+      68 -    Data:   attachments.([]*api.Attachment),                   
+      68 +    Data:   attachments.([]*jira.Attachment),                  
+      69       Display: view.DisplayFormat{                              
+      70         Plain:     params.plain,                                
+      71         NoHeaders: params.noHeaders,                            
+
+● Read(internal/cmd/issue/delete/delete.go)
+  ⎿  Read 118 lines
+
+● Write(internal/cmd/issue/attachment/remove/remove.go)
+  ⎿  Wrote 99 lines to internal/cmd/issue/attachment/remove/remove.go
+     package remove
+     import (
+       "fmt"
+       "github.com/AlecAivazis/survey/v2"
+       "github.com/spf13/cobra"
+       "github.com/ankitpokhrel/jira-cli/api"
+       "github.com/ankitpokhrel/jira-cli/internal/cmdutil"
+     … +89 lines (ctrl+o to expand)
+
+● Write(internal/cmd/issue/attachment/add/add.go)
+  ⎿  Wrote 116 lines to internal/cmd/issue/attachment/add/add.go
+     package add
+     import (
+       "fmt"
+       "os"
+       "path/filepath"
+       "github.com/spf13/cobra"
+       "github.com/spf13/viper"
+     … +106 lines (ctrl+o to expand)
+
+● Update(internal/cmd/issue/attachment/add/add.go)
+  ⎿  Added 1 line                                                        
+      11     "github.com/ankitpokhrel/jira-cli/api"                      
+      12     "github.com/ankitpokhrel/jira-cli/internal/cmdutil"         
+      13     "github.com/ankitpokhrel/jira-cli/internal/query"           
+      14 +   "github.com/ankitpokhrel/jira-cli/pkg/jira"                 
+      15   )                                                             
+      16                                                                 
+      17   const (                                                       
+
+● Update(internal/cmd/issue/attachment/add/add.go)
+  ⎿  Added 1 line, removed 1 line                                        
+      74       }()                                                       
+      75       cmdutil.ExitIfError(err)                                  
+      76                                                                 
+      77 -    att := attachments.([]*api.Attachment)                     
+      77 +    att := attachments.([]*jira.Attachment)                    
+      78       if len(att) > 0 {                                         
+      79         cmdutil.Success("Attachment %q added to issue %q (ID:   
+          %s)", att[0].Filename, params.issueKey, att[0].ID)             
+      80       }                                                         
+
+● Write(internal/cmd/issue/attachment/download/download.go)
+  ⎿  Wrote 251 lines to internal/cmd/issue/attachment/download/download.go
+     package download
+     import (
+       "fmt"
+       "os"
+       "path/filepath"
+       "github.com/AlecAivazis/survey/v2"
+       "github.com/spf13/cobra"
+       "github.com/spf13/viper"
+     … +241 lines (ctrl+o to expand)
+
+● Read(internal/cmd/issue/issue.go)
+  ⎿  Read 52 lines
+
+● Update(internal/cmd/issue/issue.go)
+  ⎿  Added 1 line                                                        
+       4     "github.com/spf13/cobra"                                    
+       5                                                                 
+       6                                                                 
+          "github.com/ankitpokhrel/jira-cli/internal/cmd/issue/assign"   
+       7 +   "github.com/ankitpokhrel/jira-cli/internal/cmd/issue/attach 
+         +ment"                                                          
+       8     "github.com/ankitpokhrel/jira-cli/internal/cmd/issue/clone" 
+       9                                                                 
+          "github.com/ankitpokhrel/jira-cli/internal/cmd/issue/comment"  
+      10                                                                 
+          "github.com/ankitpokhrel/jira-cli/internal/cmd/issue/create"   
+
+● Update(internal/cmd/issue/issue.go)
+  ⎿  Added 1 line, removed 1 line                                        
+      38     cmd.AddCommand(                                             
+      39       lc, cc, edit.NewCmdEdit(), move.NewCmdMove(),             
+          view.NewCmdView(), assign.NewCmdAssign(),                      
+      40       link.NewCmdLink(), unlink.NewCmdUnlink(),                 
+          comment.NewCmdComment(), clone.NewCmdClone(),                  
+      41 -    delete.NewCmdDelete(), watch.NewCmdWatch(),                
+         -worklog.NewCmdWorklog(),                                       
+      41 +    delete.NewCmdDelete(), watch.NewCmdWatch(),                
+         +worklog.NewCmdWorklog(), attachment.NewCmdAttachment(),        
+      42     )                                                           
+      43                                                                 
+      44     list.SetFlags(lc)                                           
+
+● Bash(go build ./...)
+  ⎿  (No content)
+
+● Bash(go test ./pkg/jira/... -v -run Attachment 2>&1)
+  ⎿ go: downloading github.com/stretchr/testify v1.10.0                    
+    go: downloading github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5
+    d4384ee4fb2
+    … +20 lines (ctrl+o to expand)
+
+
+● Bash(go test ./internal/view/... -v -run Attachment 2>&1)
+  ⎿  === RUN   TestValidAttachmentColumns 
+     === PAUSE TestValidAttachmentColumns
+     === RUN   TestAttachmentListTableData
+     … +19 lines (ctrl+o to expand)
+
+● Bash(go test ./... 2>&1) timeout: 3m 0s
+  ⎿ ?   	github.com/ankitpokhrel/jira-cli/api	[no test files]              
+    ?   	github.com/ankitpokhrel/jira-cli/cmd/jira	[no test files]
+    ?   	github.com/ankitpokhrel/jira-cli/internal/cmd/board	[no test files]
+    … +99 lines (ctrl+o to expand)
+
+
+
+● Bash(go run ./cmd/jira issue attachment --help)
+  ⎿ Attachment command helps you manage issue attachments. See available co
+    mmands below.
+    … +27 lines (ctrl+o to expand)
+
+
+● Bash(go run ./cmd/jira issue attachment add --help)
+  ⎿  Add uploads file(s) as attachments to an issue.
+
+     USAGE
+     … +36 lines (ctrl+o to expand)
+
+● Implementation complete. Here's a summary of what was created:
+
+  Attachment CRUD Implementation Summary
+
+  New Files Created
+
+  API Layer:
+  - pkg/jira/attachment.go - API client methods (GetAttachments, AddAttachment, DownloadAttachment, DeleteAttachment)
+  - pkg/jira/attachment_test.go - Comprehensive tests for API methods
+  - pkg/jira/testdata/attachment.json - Test fixture for list response
+  - pkg/jira/testdata/attachment-added.json - Test fixture for add response
+
+  View Layer:
+  - internal/view/attachment.go - Table rendering for attachment list
+
+  View Tests:
+  - internal/view/attachment_test.go - View layer tests
+
+  Commands:
+  - internal/cmd/issue/attachment/attachment.go - Parent command
+  - internal/cmd/issue/attachment/add/add.go - Upload attachments
+  - internal/cmd/issue/attachment/list/list.go - List attachments
+  - internal/cmd/issue/attachment/download/download.go - Download attachments
+  - internal/cmd/issue/attachment/remove/remove.go - Delete attachments
+
+  Modified Files
+
+  - pkg/jira/types.go - Added Attachment type and field to IssueFields
+  - internal/view/fields.go - Added field constants (fieldFilename, fieldSize, fieldMimeType, fieldAuthor)
+  - internal/cmd/issue/issue.go - Registered the attachment command
+
+  Available Commands
+
+  jira issue attachment list ISSUE-1              # List attachments
+  jira issue attachment add ISSUE-1 --file f.txt  # Upload file(s)
+  jira issue attachment download ISSUE-1 10000    # Download single
+  jira issue attachment download ISSUE-1 --all    # Download all
+  jira issue attachment remove 10000              # Delete attachment
+
+  All tests pass (go test ./...) and the build succeeds.
+
+✻ Cogitated for 13m 48s
+
+
+
