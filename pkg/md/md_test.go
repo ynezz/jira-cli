@@ -213,3 +213,74 @@ func TestToJiraMD_TypedPanels(t *testing.T) {
 		})
 	}
 }
+
+func TestToJiraMD_RegressionCases(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name            string
+		input           string
+		expectedContain string
+		expectNoContain string
+	}{
+		{
+			name: "markdown table containing links",
+			input: `| Col1 | Col2 |
+|---|---|
+| [Link](url) | text |`,
+			expectedContain: "||Col1||Col2||\n|[Link|url]|text|",
+		},
+		{
+			name:            "horizontal rule",
+			input:           "---",
+			expectedContain: "----",
+		},
+		{
+			name: "nested lists preserve depth",
+			input: `- item1
+  - subitem
+    - subsubitem`,
+			expectedContain: "* item1\n** subitem\n*** subsubitem",
+		},
+		{
+			name:            "combined bold italic code mark nesting",
+			input:           "**bold _italic `code`_**",
+			expectedContain: "*bold _italic {{code}}_*",
+		},
+		{
+			name: "all heading levels",
+			input: `# H1
+## H2
+### H3
+#### H4
+##### H5
+###### H6`,
+			expectedContain: "h1. H1\nh2. H2\nh3. H3\nh4. H4\nh5. H5\nh6. H6",
+		},
+		{
+			name:            "blockquote containing nested rich text",
+			input:           "> **bold** and _italic_ in a quote",
+			expectedContain: "{quote}\n*bold* and _italic_ in a quote",
+		},
+		{
+			name:            "mismatched typed panel tags left unchanged",
+			input:           "{info}content{warning}",
+			expectedContain: "{info}content{warning}",
+			expectNoContain: "{panel:bgColor=",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			result := ToJiraMD(tc.input)
+			assert.Contains(t, result, tc.expectedContain)
+			if tc.expectNoContain != "" {
+				assert.NotContains(t, result, tc.expectNoContain)
+			}
+		})
+	}
+}

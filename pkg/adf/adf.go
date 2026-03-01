@@ -40,6 +40,7 @@ const (
 	MarkCode   = NodeType("code")
 	MarkStrike = NodeType("strike")
 	MarkStrong = NodeType("strong")
+	MarkUnderline = NodeType("underline")
 )
 
 // TagOpener is a tag opener.

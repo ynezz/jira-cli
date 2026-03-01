@@ -480,24 +480,134 @@ func (t *Token) handleReferenceLink(line string, out *strings.Builder) int {
 }
 
 func (t *Token) handleTable(line string, out *strings.Builder) int {
-	if line[1] != '|' {
-		out.WriteString(line)
+	isHeader := strings.HasPrefix(line, TagTable) && strings.HasSuffix(line, TagTable)
+	separator := replacements[TagTable]
+	if isHeader {
+		separator = TagTable
+	}
+
+	cells := splitTableCells(line, separator)
+	for i := range cells {
+		cells[i] = renderTableCell(cells[i])
+	}
+
+	row := fmt.Sprintf("|%s|", strings.Join(cells, "|"))
+	if isHeader {
+		var sep strings.Builder
+		for range cells {
+			sep.WriteString("|---")
+		}
+		out.WriteString(fmt.Sprintf("%s\n%s|", row, sep.String()))
 		return t.endIdx
 	}
-
-	headers := strings.ReplaceAll(line, TagTable, replacements[TagTable])
-	cols := strings.Split(headers, "|")
-
-	var sep strings.Builder
-	for range len(cols) - 2 {
-		sep.WriteString("|---")
-	}
-
-	row := fmt.Sprintf("%s\n%s|", headers, sep.String())
 
 	out.WriteString(row)
 
 	return t.endIdx
+}
+
+func splitTableCells(line, separator string) []string {
+	if !strings.HasPrefix(line, separator) || !strings.HasSuffix(line, separator) {
+		return []string{line}
+	}
+
+	body := line[len(separator) : len(line)-len(separator)]
+
+	var (
+		cells   []string
+		current strings.Builder
+		depth   int
+	)
+
+	for i := 0; i < len(body); {
+		if depth == 0 && strings.HasPrefix(body[i:], separator) {
+			cells = append(cells, current.String())
+			current.Reset()
+			i += len(separator)
+			continue
+		}
+
+		switch body[i] {
+		case '[':
+			depth++
+		case ']':
+			if depth > 0 {
+				depth--
+			}
+		}
+
+		current.WriteByte(body[i])
+		i++
+	}
+
+	cells = append(cells, current.String())
+
+	return cells
+}
+
+func renderTableCell(cell string) string {
+	return normalizeBoldMarkup(convertReferenceLinks(cell))
+}
+
+func convertReferenceLinks(cell string) string {
+	var out strings.Builder
+
+	for i := 0; i < len(cell); {
+		if cell[i] != '[' {
+			out.WriteByte(cell[i])
+			i++
+			continue
+		}
+
+		end := i + 1
+		for end < len(cell) && cell[end] != ']' {
+			end++
+		}
+		if end >= len(cell) {
+			out.WriteByte(cell[i])
+			i++
+			continue
+		}
+
+		body := cell[i+1 : end]
+		pieces := strings.SplitN(body, "|", 2)
+		if len(pieces) == 2 {
+			out.WriteString(fmt.Sprintf("[%s](%s)", pieces[0], pieces[1]))
+		} else {
+			out.WriteString(fmt.Sprintf("[](%s)", pieces[0]))
+		}
+
+		i = end + 1
+	}
+
+	return out.String()
+}
+
+func normalizeBoldMarkup(cell string) string {
+	var out strings.Builder
+
+	for i := 0; i < len(cell); i++ {
+		if cell[i] != '*' || i+1 >= len(cell) || cell[i+1] == ' ' || cell[i+1] == '*' {
+			out.WriteByte(cell[i])
+			continue
+		}
+
+		end := i + 1
+		for end < len(cell) && cell[end] != '*' {
+			end++
+		}
+		if end >= len(cell) {
+			out.WriteByte(cell[i])
+			continue
+		}
+
+		out.WriteString("**")
+		out.WriteString(cell[i+1 : end])
+		out.WriteString("**")
+		i = end
+	}
+
+	return out.String()
 }
 
 func isToken(inp string) bool {

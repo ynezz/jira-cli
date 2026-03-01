@@ -24,8 +24,9 @@ var panelColors = map[string]string{
 // Capture groups: 1=panel type, 2=optional attributes, 3=content, 4=closing type.
 var typedPanelPattern = regexp.MustCompile(`(?s)\{(info|warning|note|tip|error|success)(?::([^}]*))?\}(.*?)\{(info|warning|note|tip|error|success)\}`)
 
-// minPanelSubmatches is the minimum number of submatch groups expected from typedPanelPattern.
-const minPanelSubmatches = 4
+// minPanelSubmatches is the minimum number of submatches expected from typedPanelPattern,
+// including the full match at index 0.
+const minPanelSubmatches = 5
 
 // convertTypedPanels converts typed wiki markup panels like {info}...{info}
 // to {panel:bgColor=...}...{panel} format that Jira Cloud recognizes.
@@ -37,8 +38,13 @@ func convertTypedPanels(input string) string {
 		}
 
 		panelType := submatch[1] // Opening tag type
-		attrs := submatch[2]     // Optional attributes
-		content := submatch[3]   // Content between tags
+		closingType := submatch[4]
+		if panelType != closingType {
+			return match
+		}
+
+		attrs := submatch[2]   // Optional attributes
+		content := submatch[3] // Content between tags
 
 		color, ok := panelColors[panelType]
 		if !ok {

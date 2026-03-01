@@ -461,6 +461,41 @@ func main() {
 ` + "```\n",
 		},
 		{
+			name: "code block containing wiki heading syntax",
+			input: `{code}
+h1. Not a heading
+{code}`,
+			expected: "\n```\nh1. Not a heading\n```\n",
+		},
+		{
+			name: "code block containing table looking content",
+			input: `{code}
+||not||a||table||
+{code}`,
+			expected: "\n```\n||not||a||table||\n```\n",
+		},
+		{
+			name: "adjacent code and noformat blocks render independently",
+			input: `{code:java}
+System.out.println("hi");
+{code}
+
+{noformat}
+raw text
+{noformat}`,
+			expected: "\n```java\nSystem.out.println(\"hi\");\n```\n\n\n```\nraw text\n```\n",
+		},
+		{
+			name: "code block containing blank lines and braces",
+			input: `{code:go}
+func main() {
+
+  fmt.Println("hello")
+}
+{code}`,
+			expected: "\n```go\nfunc main() {\n\n  fmt.Println(\"hello\")\n}\n```\n",
+		},
+		{
 			name: "out of memory bug in preformatted block #221",
 			input: `{noformat}
 1
@@ -584,6 +619,49 @@ func TestTables(t *testing.T) {
 			input: `||heading 1||heading 2||heading 3||`,
 			expected: `|heading 1|heading 2|heading 3|
 |---|---|---|
+`,
+		},
+		{
+			name:  "header cell containing jira link",
+			input: `||Name||[Link|https://example.com]||`,
+			expected: `|Name|[Link](https://example.com)|
+|---|---|
+`,
+		},
+		{
+			name: "body cell containing jira link",
+			input: `||Col1||Col2||
+|cell|[Google|https://google.com]|`,
+			expected: `|Col1|Col2|
+|---|---|
+|cell|[Google](https://google.com)|
+`,
+		},
+		{
+			name: "cell containing multiple links",
+			input: `||Col1||Col2||
+|[A|url1] and [B|url2]|text|`,
+			expected: `|Col1|Col2|
+|---|---|
+|[A](url1) and [B](url2)|text|
+`,
+		},
+		{
+			name: "cell mixing bold and jira link syntax",
+			input: `||Col||
+|*[Bold Link|url]*|`,
+			expected: `|Col|
+|---|
+|**[Bold Link](url)**|
+`,
+		},
+		{
+			name: "empty cell should preserve alignment",
+			input: `||H1||H2||
+||data|`,
+			expected: `|H1|H2|
+|---|---|
+||data|
 `,
 		},
 		{

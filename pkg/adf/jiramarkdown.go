@@ -27,11 +27,13 @@ type JiraMarkdownTranslator struct {
 // NewJiraMarkdownTranslator constructs jira markdown translator.
 func NewJiraMarkdownTranslator() *JiraMarkdownTranslator {
 	openHooks := nodeTypeHook{
-		NodePanel: nodePanelOpenHook,
+		NodePanel:     nodePanelOpenHook,
+		MarkUnderline: nodeUnderlineOpenHook,
 	}
 
 	closeHooks := nodeTypeHook{
-		NodePanel: nodePanelCloseHook,
+		NodePanel:     nodePanelCloseHook,
+		MarkUnderline: nodeUnderlineCloseHook,
 	}
 
 	return &JiraMarkdownTranslator{
@@ -89,4 +91,12 @@ func nodePanelOpenHook(n Connector) string {
 
 func nodePanelCloseHook(Connector) string {
 	return "{panel}\n"
+}
+
+func nodeUnderlineOpenHook(Connector) string {
+	return " +"
+}
+
+func nodeUnderlineCloseHook(Connector) string {
+	return "+ "
 }
