@@ -272,46 +272,10 @@ bv --robot-insights | jq '.Cycles'                         # Circular deps (must
 
 ---
 
-## Reusable QA & Release Runbook
+## Release Process
 
-### Manual QA Plan (Canonical)
-
-Use [`tests/manual/manual-test-plan.md`](tests/manual/manual-test-plan.md) as
-the canonical reusable Jira Cloud verification procedure for
-formatting/rendering changes.
-
-Use [`tests/manual/golden-jira-issue.md`](tests/manual/golden-jira-issue.md)
-as the static issue-description fixture and
-[`tests/manual/golden-jira-issue.json`](tests/manual/golden-jira-issue.json)
-as the stable case/check mapping source for manual verification reporting.
-
-When a QA bead asks for manual verification (for example `br-258`), follow
-the plan end-to-end and do not invent ad-hoc variants.
-
-Minimum completion artifacts:
-- Candidate commit/tag tested
-- Jira project + probe issue key
-- Forward-path result (`Markdown -> Wiki -> ADF -> Web UI`)
-- Reverse-path result (`ADF -> jira issue view --plain/--raw`)
-- Follow-up bead IDs for any failures (`discovered-from:<qa-bead-id>`)
-
-### Release Process (Reusable)
-
-For release beads (for example `br-157`), use this reusable sequence:
-
-1. Confirm release blockers and required QA beads are closed.
-2. Sync branch state: `git pull --rebase`.
-3. Run quality gates for the candidate:
-   - `go test -race ./...`
-   - `ubs --diff --only=golang`
-4. Execute the release bead's version/tag/build steps (project currently uses
-   GoReleaser-based release flow).
-5. Push commits/tags and verify: `git status` reports up to date with origin.
-6. Post a release summary with:
-   - version/tag
-   - artifact/build output reference
-   - linked manual QA result from
-     `tests/manual/manual-test-plan.md` template
+See [`docs/agents/release.md`](docs/agents/release.md) for the complete
+release runbook (QA, tagging, building).
 
 ---
 
