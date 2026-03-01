@@ -120,7 +120,7 @@ Prefer small, targeted fixtures instead of extending the existing monolithic gol
 
 ---
 
-## Phase 2: Fix known bugs
+## Phase 2: Fix confirmed and suspected bugs
 
 ### Bug 1: Links inside table cells
 
