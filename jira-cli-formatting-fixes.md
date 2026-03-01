@@ -30,9 +30,9 @@ Related but separate path:
 | listItem | Y | Y | Y | SUPPORTED |
 | blockquote | Y | Y | Y | SUPPORTED |
 | codeBlock+language | Y | Y | Y | SUPPORTED |
-| table/row/cell/header | Y | Y | Y | SUPPORTED (BUG: links in cells) |
+| table/row/cell/header | Y | Y | Y | SUPPORTED (known Wiki→MD bug when cells contain Jira links) |
 | panel (`{panel}`) | Y | Y | Y | SUPPORTED |
-| typed panels (`{info}`/`{warning}`/`{note}`/`{tip}`/`{error}`/`{success}`) | — | partial | partial | **PARTIAL** (not parsed by Wiki→MD parser) |
+| typed panels (`{info}`/`{warning}`/`{note}`/`{tip}`/`{error}`/`{success}`) | — | partial | partial | **PARTIAL** (Wiki→MD unsupported; MD→Wiki rewrites only pre-existing typed macros; ADF→MD drops `panelType` styling metadata) |
 | rule (hr) | — | Y | — | **PARTIAL** (MD→Wiki only) |
 | expand | — | — | — | **NOT SUPPORTED** |
 | nestedExpand | — | — | — | **NOT SUPPORTED** |
