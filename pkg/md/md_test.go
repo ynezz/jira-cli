@@ -2,6 +2,7 @@ package md
 
 import (
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -352,4 +353,48 @@ func TestToJiraMD_ListIndentationNormalizerSkipsFencedCode(t *testing.T) {
 
 	assert.Contains(t, result, "{noformat}\n  - keep spacing\n    - keep spacing too\n{noformat}")
 	assert.Contains(t, result, "* list\n** nested")
+}
+
+func TestToJiraMDConcurrentRenderingProducesStableOutput(t *testing.T) {
+	t.Parallel()
+
+	const (
+		iterations = 150
+		workers    = 8
+	)
+
+	inputA := "- parent\n  - child\n"
+	inputB := "- one\n"
+	expectedA := ToJiraMD(inputA)
+	expectedB := ToJiraMD(inputB)
+
+	errs := make(chan string, iterations*workers*2)
+	var wg sync.WaitGroup
+
+	for range iterations {
+		for range workers {
+			wg.Add(2)
+
+			go func() {
+				defer wg.Done()
+				if got := ToJiraMD(inputA); got != expectedA {
+					errs <- "inputA"
+				}
+			}()
+
+			go func() {
+				defer wg.Done()
+				if got := ToJiraMD(inputB); got != expectedB {
+					errs <- "inputB"
+				}
+			}()
+		}
+	}
+
+	wg.Wait()
+	close(errs)
+
+	for bad := range errs {
+		t.Fatalf("non-deterministic output detected for %s under concurrent rendering", bad)
+	}
 }

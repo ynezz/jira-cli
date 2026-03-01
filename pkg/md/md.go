@@ -3,6 +3,7 @@ package md
 import (
 	"regexp"
 	"strings"
+	"sync"
 
 	cf "github.com/kentaro-m/blackfriday-confluence"
 	bf "github.com/russross/blackfriday/v2"
@@ -19,6 +20,8 @@ var panelColors = map[string]string{
 	"error":   "#ffebe6",
 	"success": "#e3fcef",
 }
+
+var toJiraMDMu sync.Mutex
 
 // typedPanelPattern matches a complete typed panel block: {type}...{type} or {type:attrs}...{type}.
 // Uses (?s) for DOTALL mode so . matches newlines.
@@ -217,6 +220,11 @@ func ToJiraMD(md string) string {
 
 	renderer := &cf.Renderer{Flags: cf.IgnoreMacroEscaping}
 	r := bf.New(bf.WithRenderer(renderer), bf.WithExtensions(bf.CommonExtensions))
+
+	// blackfriday-confluence uses shared package-level list state internally;
+	// serialize rendering to avoid cross-goroutine state corruption.
+	toJiraMDMu.Lock()
+	defer toJiraMDMu.Unlock()
 
 	output := string(renderer.Render(r.Parse([]byte(md))))
 	return normalizeCodeBlocks(output)
