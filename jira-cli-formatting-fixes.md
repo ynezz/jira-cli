@@ -150,7 +150,19 @@ Prefer small, targeted fixtures instead of extending the existing monolithic gol
 - Prefer upstreamable renderer behavior change (or module replace to a fork) over brittle string post-processing.
 - Use post-processing in `ToJiraMD()` only as a last resort, with strict fixture coverage.
 
-### Bug 3: Underline mark not rendered (ADF→MD)
+### Bug 3: Typed panel regex accepts mismatched open/close tags
+
+**Files**: `pkg/md/md.go`, `pkg/md/md_test.go`
+
+**Root cause**:
+- `typedPanelPattern` captures opening and closing panel types independently but does not enforce that they match.
+- As a result, malformed input like `{info}x{warning}` can be rewritten as a valid `{panel:bgColor=...}` block instead of being preserved as invalid source text.
+
+**Fix**:
+- Change the regex to require matching close tag type (use a backreference to the opening type).
+- Add regression tests that mismatched typed panel tags are left unchanged.
+
+### Bug 4: Underline mark not rendered (ADF→MD)
 
 **File**: `pkg/adf/markdown.go`
 
@@ -167,7 +179,7 @@ Test data includes underline marks, but there is no `MarkUnderline` type constan
 
 1. Branch `ynezz/formatting-fixes` from `ynezz/issue-attachments`
 2. Add all test cases first (TDD)
-3. Implement confirmed fixes (bug 1 and bug 3), and implement bug 2 only if its failing fixture is confirmed
+3. Implement confirmed fixes (bugs 1, 3, and 4), and implement bug 2 only if its failing fixture is confirmed
 4. Run full test suite: `go test -race ./...`
 5. Manual test: create ticket with all formatting elements, verify in Jira web UI
 6. Tag `v1.7.0-ynezz.3`, build via GoReleaser, install
@@ -184,7 +196,7 @@ Test data includes underline marks, but there is no `MarkUnderline` type constan
 | `pkg/adf/adf.go` | Add `MarkUnderline` constant |
 | `pkg/adf/markdown.go` | Add underline mark rendering logic |
 | `pkg/adf/adf_test.go` | Add focused ADF→MD fixtures (+3 to +5) |
-| `pkg/md/md.go` | Update only if code-block escaping bug is reproduced |
+| `pkg/md/md.go` | Harden typed panel regex to require matching open/close tags; additional renderer changes only if code-block escaping bug is reproduced |
 | `go.mod` / `go.sum` | Update only if a temporary renderer fork/replace is required |
 
 ## Verification
