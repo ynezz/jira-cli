@@ -251,6 +251,11 @@ func TestParseReferenceLinks(t *testing.T) {
 			expected: "[text](https://example.com/path?q=a&b=c#frag)\n",
 		},
 		{
+			name:     "markdown link inside bold markup remains unchanged",
+			input:    "*[Docs](https://example.com)*",
+			expected: "**[Docs](https://example.com)**\n\n",
+		},
+		{
 			name:     "invalid link",
 			input:    "This is a [Link|https://ankit.pl, and some texts.",
 			expected: "This is a [Link|https://ankit.pl, and some texts.",
@@ -322,6 +327,21 @@ line one
 line two{quote}
 outside`,
 			expected: "\n> line one\n> line two\n\noutside",
+		},
+		{
+			name: "multiline blockquote preserves leading and trailing spaces",
+			input: `{quote}
+    indented text   
+{quote}`,
+			expected: "\n>     indented text   \n\n",
+		},
+		{
+			name: "multiline blockquote converts links and ordered markers",
+			input: `{quote}
+[Docs|https://example.com]
+# ordered item
+{quote}`,
+			expected: "\n> [Docs](https://example.com)\n> - ordered item\n\n",
 		},
 	}
 
@@ -689,6 +709,15 @@ func TestTables(t *testing.T) {
 			expected: `|Col|
 |---|
 |**[Bold Link](url)**|
+`,
+		},
+		{
+			name: "cell containing markdown link remains unchanged",
+			input: `||H||
+|[Docs](https://example.com)|`,
+			expected: `|H|
+|---|
+|[Docs](https://example.com)|
 `,
 		},
 		{

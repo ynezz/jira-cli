@@ -148,10 +148,14 @@ func secondPass(lines []string) string {
 
 		if inQuote {
 			closeInline := false
-			if strings.HasSuffix(trimmed, TagQuote) && strings.Count(trimmed, TagQuote) == 1 {
-				trimmed = strings.TrimSpace(strings.TrimSuffix(trimmed, TagQuote))
+			quoteLineContent := line
+			if strings.HasSuffix(trimmed, TagQuote) && strings.Count(quoteLineContent, TagQuote) == 1 {
+				if idx := strings.LastIndex(quoteLineContent, TagQuote); idx >= 0 {
+					quoteLineContent = quoteLineContent[:idx] + quoteLineContent[idx+len(TagQuote):]
+				}
 				closeInline = true
 			}
+			quoteLineContent = convertQuoteLineContent(quoteLineContent)
 
 			if quoteLine == 0 {
 				out.WriteString("\n> ")
@@ -159,7 +163,7 @@ func secondPass(lines []string) string {
 				out.WriteString("> ")
 			}
 
-			out.WriteString(trimmed)
+			out.WriteString(quoteLineContent)
 			out.WriteByte(newLine)
 			quoteLine++
 
@@ -608,6 +612,38 @@ func renderTableCell(cell string) string {
 	return normalizeBoldMarkup(convertReferenceLinks(cell))
 }
 
+func convertQuoteLineContent(line string) string {
+	leading := len(line) - len(strings.TrimLeft(line, " \t"))
+	trailing := len(line) - len(strings.TrimRight(line, " \t"))
+	if leading+trailing >= len(line) {
+		return line
+	}
+
+	coreEnd := len(line) - trailing
+	core := line[leading:coreEnd]
+	core = convertQuoteOrderedList(core)
+	core = normalizeBoldMarkup(convertReferenceLinks(core))
+
+	return line[:leading] + core + line[coreEnd:]
+}
+
+func convertQuoteOrderedList(line string) string {
+	if line == "" {
+		return line
+	}
+
+	depth := 0
+	for depth < len(line) && line[depth] == '#' {
+		depth++
+	}
+	if depth == 0 || depth >= len(line) || line[depth] != ' ' {
+		return line
+	}
+
+	rem := strings.TrimSpace(line[depth+1:])
+	return fmt.Sprintf("%s- %s", strings.Repeat("\t", depth-1), rem)
+}
+
 func convertReferenceLinks(cell string) string {
 	var out strings.Builder
 
@@ -633,7 +669,7 @@ func convertReferenceLinks(cell string) string {
 		if len(pieces) == 2 {
 			out.WriteString(fmt.Sprintf("[%s](%s)", pieces[0], pieces[1]))
 		} else {
-			out.WriteString(fmt.Sprintf("[](%s)", pieces[0]))
+			out.WriteString(cell[i : end+1])
 		}
 
 		i = end + 1
