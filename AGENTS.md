@@ -276,10 +276,16 @@ bv --robot-insights | jq '.Cycles'                         # Circular deps (must
 
 ### Manual QA Plan (Canonical)
 
-Use [`manual-test-plan.md`](manual-test-plan.md) as the canonical reusable
-Jira Cloud verification procedure for formatting/rendering changes.
+Use [`tests/manual/manual-test-plan.md`](tests/manual/manual-test-plan.md) as
+the canonical reusable Jira Cloud verification procedure for
+formatting/rendering changes.
 
-When a QA bead asks for manual verification (for example `bd-258`), follow
+Use [`tests/manual/golden-jira-issue.md`](tests/manual/golden-jira-issue.md)
+as the static issue-description fixture and
+[`tests/manual/golden-jira-issue.json`](tests/manual/golden-jira-issue.json)
+as the stable case/check mapping source for manual verification reporting.
+
+When a QA bead asks for manual verification (for example `br-258`), follow
 the plan end-to-end and do not invent ad-hoc variants.
 
 Minimum completion artifacts:
@@ -291,7 +297,7 @@ Minimum completion artifacts:
 
 ### Release Process (Reusable)
 
-For release beads (for example `bd-157`), use this reusable sequence:
+For release beads (for example `br-157`), use this reusable sequence:
 
 1. Confirm release blockers and required QA beads are closed.
 2. Sync branch state: `git pull --rebase`.
@@ -304,7 +310,8 @@ For release beads (for example `bd-157`), use this reusable sequence:
 6. Post a release summary with:
    - version/tag
    - artifact/build output reference
-   - linked manual QA result from `manual-test-plan.md` template
+   - linked manual QA result from
+     `tests/manual/manual-test-plan.md` template
 
 ---
 
