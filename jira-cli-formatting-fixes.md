@@ -124,7 +124,7 @@ Prefer small, targeted fixtures instead of extending the existing monolithic gol
 
 ### Bug 1: Links inside table cells
 
-**Files**: `pkg/md/jirawiki/parser.go` (lines 282-290, 482-501)
+**Files**: `pkg/md/jirawiki/parser.go` (`tokenize`, `handleTable`)
 
 **Root cause**:
 - Header lines are tokenized as a single table token, then `handleTable()` runs `strings.ReplaceAll(... "||" -> "|")` and `strings.Split(..., "|")`. This treats `|` inside `[text|url]` as a column separator and produces wrong column counts.
