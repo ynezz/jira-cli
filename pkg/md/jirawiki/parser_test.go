@@ -231,6 +231,26 @@ func TestParseReferenceLinks(t *testing.T) {
 			expected: "A **bold**, _italic_ and -strikethrough- text with [a link](https://ankit.pl) in between.\n",
 		},
 		{
+			name:     "link inside bold markup",
+			input:    "*[text|url]*",
+			expected: "**[text](url)**\n\n",
+		},
+		{
+			name:     "link inside italic markup",
+			input:    "_[text|url]_",
+			expected: "_[text](url)_\n",
+		},
+		{
+			name:     "multiple links in one line",
+			input:    "[A|url1] and [B|url2]",
+			expected: "[A](url1) and [B](url2)\n",
+		},
+		{
+			name:     "link with URL query string and fragment",
+			input:    "[text|https://example.com/path?q=a&b=c#frag]",
+			expected: "[text](https://example.com/path?q=a&b=c#frag)\n",
+		},
+		{
 			name:     "invalid link",
 			input:    "This is a [Link|https://ankit.pl, and some texts.",
 			expected: "This is a [Link|https://ankit.pl, and some texts.",

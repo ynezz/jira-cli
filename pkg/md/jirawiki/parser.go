@@ -368,6 +368,7 @@ type Token struct {
 
 func (t *Token) handleTextEffects(line string, out *strings.Builder) int {
 	word := line[t.startIdx+1 : t.endIdx]
+	word = convertReferenceLinks(word)
 
 	out.WriteString(replacements[string(line[t.startIdx])])
 	out.WriteString(word)
