@@ -23,10 +23,9 @@ var panelColors = map[string]string{
 
 var toJiraMDMu sync.Mutex
 
-// typedPanelPattern matches a complete typed panel block: {type}...{type} or {type:attrs}...{type}.
-// Uses (?s) for DOTALL mode so . matches newlines.
-// Capture groups: 1=panel type, 2=optional attributes, 3=content, 4=closing type.
-var typedPanelPattern = regexp.MustCompile(`(?s)\{(info|warning|note|tip|error|success)(?::([^}]*))?\}(.*?)\{(info|warning|note|tip|error|success)\}`)
+// typedPanelTagPattern matches a typed panel tag: {info} or {info:title=...}.
+// Capture groups: 1=panel type, 2=optional attributes.
+var typedPanelTagPattern = regexp.MustCompile(`\{(info|warning|note|tip|error|success)(?::([^}]*))?\}`)
 
 // markdownListPattern matches a markdown list item with space indentation.
 var markdownListPattern = regexp.MustCompile(`^([ ]*)([*+-]|\d+\.)\s+`)
@@ -37,42 +36,68 @@ var codeLanguagePattern = regexp.MustCompile(`^\{code:language=([^}\r\n]+)\}$`)
 // typedCodePattern matches code macro opening tags that already use shorthand.
 var typedCodePattern = regexp.MustCompile(`^\{code:[^}\r\n]+\}$`)
 
-// minPanelSubmatches is the minimum number of submatches expected from typedPanelPattern,
-// including the full match at index 0.
-const minPanelSubmatches = 5
-
 // convertTypedPanels converts typed wiki markup panels like {info}...{info}
 // to {panel:bgColor=...}...{panel} format that Jira Cloud recognizes.
 func convertTypedPanels(input string) string {
-	return typedPanelPattern.ReplaceAllStringFunc(input, func(match string) string {
-		submatch := typedPanelPattern.FindStringSubmatch(match)
-		if len(submatch) < minPanelSubmatches {
-			return match
+	type typedPanelTag struct {
+		panelType string
+		attrs     string
+		start     int
+		end       int
+	}
+
+	findInnermostPair := func(value string) (typedPanelTag, typedPanelTag, bool) {
+		stack := make([]typedPanelTag, 0)
+		matches := typedPanelTagPattern.FindAllStringSubmatchIndex(value, -1)
+		for _, m := range matches {
+			if len(m) < 6 {
+				continue
+			}
+
+			tag := typedPanelTag{
+				panelType: value[m[2]:m[3]],
+				start:     m[0],
+				end:       m[1],
+			}
+			if m[4] >= 0 && m[5] >= 0 {
+				tag.attrs = value[m[4]:m[5]]
+			}
+
+			// Tags with explicit attributes are always treated as opening tags.
+			if tag.attrs != "" {
+				stack = append(stack, tag)
+				continue
+			}
+
+			if len(stack) > 0 && stack[len(stack)-1].panelType == tag.panelType {
+				return stack[len(stack)-1], tag, true
+			}
+
+			stack = append(stack, tag)
 		}
 
-		panelType := submatch[1] // Opening tag type
-		closingType := submatch[4]
-		if panelType != closingType {
-			return match
-		}
+		return typedPanelTag{}, typedPanelTag{}, false
+	}
 
-		attrs := submatch[2]   // Optional attributes
-		content := submatch[3] // Content between tags
-
-		color, ok := panelColors[panelType]
+	for {
+		open, close, ok := findInnermostPair(input)
 		if !ok {
-			return match
+			return input
 		}
 
-		// Build the panel tag with bgColor
+		color, colorOK := panelColors[open.panelType]
+		if !colorOK {
+			return input
+		}
+
 		openTag := "{panel:bgColor=" + color
-		if attrs != "" {
-			openTag += "|" + attrs
+		if open.attrs != "" {
+			openTag += "|" + open.attrs
 		}
 		openTag += "}"
 
-		return openTag + content + "{panel}"
-	})
+		input = input[:open.start] + openTag + input[open.end:close.start] + "{panel}" + input[close.end:]
+	}
 }
 
 func normalizeCodeBlocks(input string) string {
