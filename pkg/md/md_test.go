@@ -186,6 +186,11 @@ func TestConvertTypedPanels(t *testing.T) {
 			input:    "{info}Unclosed panel",
 			expected: "{info}Unclosed panel",
 		},
+		{
+			name:     "panel-like syntax inside fenced code block does not poison stack",
+			input:    "```\n{info:title=Not a panel}\nLiteral\n```\n\n{info:title=Real}\nBody\n{info}",
+			expected: "```\n{info:title=Not a panel}\nLiteral\n```\n\n{panel:bgColor=#deebff|title=Real}\nBody\n{panel}",
+		},
 	}
 
 	for _, tc := range cases {
@@ -310,6 +315,11 @@ func TestToJiraMD_RegressionCases(t *testing.T) {
 			input:           "{info}content{warning}",
 			expectedContain: "{info}content{warning}",
 			expectNoContain: "{panel:bgColor=",
+		},
+		{
+			name:            "code block with panel-like content does not block later panel conversion",
+			input:           "```\n{info:title=Not a panel}\nLiteral\n```\n\n{info:title=Real}\nBody\n{info}",
+			expectedContain: "{panel:bgColor=#deebff|title=Real}",
 		},
 	}
 

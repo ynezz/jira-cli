@@ -41,6 +41,31 @@ var codeLanguagePattern = regexp.MustCompile(`^\{code:language=([^}\r\n]+)\}$`)
 // typedCodePattern matches code macro opening tags that already use shorthand.
 var typedCodePattern = regexp.MustCompile(`^\{code:[^}\r\n]+\}$`)
 
+// fencedCodeRegions returns byte offset ranges [start, end) for fenced code
+// blocks (``` or ~~~) in the input. Panel-like syntax inside these regions
+// must be ignored to avoid poisoning the depth stack.
+func fencedCodeRegions(input string) [][2]int {
+	var regions [][2]int
+	lines := strings.Split(input, "\n")
+	offset := 0
+	inFence := false
+	fenceStart := 0
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if !inFence && (strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~")) {
+			inFence = true
+			fenceStart = offset
+		} else if inFence && (strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~")) {
+			regions = append(regions, [2]int{fenceStart, offset + len(line)})
+			inFence = false
+		}
+		offset += len(line) + 1 // +1 for the newline
+	}
+
+	return regions
+}
+
 // convertTypedPanels converts typed wiki markup panels like {info}...{info}
 // to {panel:bgColor=...}...{panel} format that Jira Cloud recognizes.
 func convertTypedPanels(input string) string {
@@ -56,11 +81,24 @@ func convertTypedPanels(input string) string {
 		depth int
 	}
 
+	codeRegions := fencedCodeRegions(input)
+
 	stack := make([]typedPanelTag, 0)
 	pairs := make([]typedPanelPair, 0)
 	matches := typedPanelTagPattern.FindAllStringSubmatchIndex(input, -1)
 
 	for _, m := range matches {
+		// Skip matches inside fenced code blocks.
+		inCode := false
+		for _, r := range codeRegions {
+			if m[0] >= r[0] && m[1] <= r[1] {
+				inCode = true
+				break
+			}
+		}
+		if inCode {
+			continue
+		}
 		if len(m) < 6 {
 			continue
 		}
