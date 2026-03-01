@@ -315,6 +315,14 @@ func TestParseBlockQuote(t *testing.T) {
 {quote}`,
 			expected: "\n> * item one\n> * item two\n\n",
 		},
+		{
+			name: "multiline blockquote closes on inline closing tag",
+			input: `{quote}
+line one
+line two{quote}
+outside`,
+			expected: "\n> line one\n> line two\n\noutside",
+		},
 	}
 
 	for _, tc := range cases {

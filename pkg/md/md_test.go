@@ -1,6 +1,7 @@
 package md
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -283,4 +284,51 @@ func TestToJiraMD_RegressionCases(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestToJiraMD_CodeBlockLanguageMapping(t *testing.T) {
+	t.Parallel()
+
+	t.Run("language-tagged fenced block uses code shorthand", func(t *testing.T) {
+		t.Parallel()
+
+		input := "```go\npackage main\nfunc main() {}\n```\n"
+		result := ToJiraMD(input)
+
+		assert.Contains(t, result, "{code:go}")
+		assert.NotContains(t, result, "{code:language=go}")
+		assert.NotContains(t, result, "{noformat}")
+	})
+
+	t.Run("plain fenced block uses noformat", func(t *testing.T) {
+		t.Parallel()
+
+		input := "```\nplain block, no language\n```\n"
+		result := ToJiraMD(input)
+
+		assert.Equal(t, 2, strings.Count(result, "{noformat}"))
+		assert.NotContains(t, result, "{code}\nplain block, no language\n{code}")
+	})
+
+	t.Run("multiple fenced blocks keep boundaries", func(t *testing.T) {
+		t.Parallel()
+
+		input := "```go\npackage main\nfunc main() {}\n```\n\n```\nplain block, no language\n```\n"
+		result := ToJiraMD(input)
+
+		assert.Contains(t, result, "{code:go}\npackage main\nfunc main() {}\n{code}")
+		assert.Contains(t, result, "{noformat}\nplain block, no language\n{noformat}")
+		assert.NotContains(t, result, "{noformat}\n\n{noformat}\nplain block, no language")
+	})
+
+	t.Run("existing typed code macro is preserved", func(t *testing.T) {
+		t.Parallel()
+
+		input := "{code:go}\npackage main\nfunc main() {}\n{code}\n"
+		result := ToJiraMD(input)
+
+		assert.Contains(t, result, "{code:go}")
+		assert.Contains(t, result, "\n{code}")
+		assert.NotContains(t, result, "{noformat}")
+	})
 }

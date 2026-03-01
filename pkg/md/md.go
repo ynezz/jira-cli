@@ -2,6 +2,7 @@ package md
 
 import (
 	"regexp"
+	"strings"
 
 	cf "github.com/kentaro-m/blackfriday-confluence"
 	bf "github.com/russross/blackfriday/v2"
@@ -23,6 +24,12 @@ var panelColors = map[string]string{
 // Uses (?s) for DOTALL mode so . matches newlines.
 // Capture groups: 1=panel type, 2=optional attributes, 3=content, 4=closing type.
 var typedPanelPattern = regexp.MustCompile(`(?s)\{(info|warning|note|tip|error|success)(?::([^}]*))?\}(.*?)\{(info|warning|note|tip|error|success)\}`)
+
+// codeLanguagePattern matches renderer output line for typed code blocks.
+var codeLanguagePattern = regexp.MustCompile(`^\{code:language=([^}\r\n]+)\}$`)
+
+// typedCodePattern matches code macro opening tags that already use shorthand.
+var typedCodePattern = regexp.MustCompile(`^\{code:[^}\r\n]+\}$`)
 
 // minPanelSubmatches is the minimum number of submatches expected from typedPanelPattern,
 // including the full match at index 0.
@@ -62,6 +69,64 @@ func convertTypedPanels(input string) string {
 	})
 }
 
+func normalizeCodeBlocks(input string) string {
+	if input == "" {
+		return input
+	}
+
+	hasTrailingNewline := strings.HasSuffix(input, "\n")
+	trimmedInput := strings.TrimSuffix(input, "\n")
+	lines := strings.Split(trimmedInput, "\n")
+
+	inCodeBlock := false
+	useNoFormat := false
+	out := make([]string, 0, len(lines))
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		if submatch := codeLanguagePattern.FindStringSubmatch(trimmed); len(submatch) == 2 {
+			out = append(out, "{code:"+submatch[1]+"}")
+			inCodeBlock = true
+			useNoFormat = false
+			continue
+		}
+
+		if typedCodePattern.MatchString(trimmed) {
+			out = append(out, line)
+			inCodeBlock = true
+			useNoFormat = false
+			continue
+		}
+
+		if trimmed == "{code}" {
+			if inCodeBlock {
+				if useNoFormat {
+					out = append(out, "{noformat}")
+				} else {
+					out = append(out, "{code}")
+				}
+				inCodeBlock = false
+				useNoFormat = false
+			} else {
+				out = append(out, "{noformat}")
+				inCodeBlock = true
+				useNoFormat = true
+			}
+			continue
+		}
+
+		out = append(out, line)
+	}
+
+	output := strings.Join(out, "\n")
+	if hasTrailingNewline {
+		output += "\n"
+	}
+
+	return output
+}
+
 // ToJiraMD translates CommonMark to Jira flavored markdown.
 func ToJiraMD(md string) string {
 	if md == "" {
@@ -74,7 +139,8 @@ func ToJiraMD(md string) string {
 	renderer := &cf.Renderer{Flags: cf.IgnoreMacroEscaping}
 	r := bf.New(bf.WithRenderer(renderer), bf.WithExtensions(bf.CommonExtensions))
 
-	return string(renderer.Render(r.Parse([]byte(md))))
+	output := string(renderer.Render(r.Parse([]byte(md))))
+	return normalizeCodeBlocks(output)
 }
 
 // FromJiraMD translates Jira flavored markdown to CommonMark.

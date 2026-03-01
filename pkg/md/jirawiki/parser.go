@@ -147,6 +147,12 @@ func secondPass(lines []string) string {
 		}
 
 		if inQuote {
+			closeInline := false
+			if strings.HasSuffix(trimmed, TagQuote) && strings.Count(trimmed, TagQuote) == 1 {
+				trimmed = strings.TrimSpace(strings.TrimSuffix(trimmed, TagQuote))
+				closeInline = true
+			}
+
 			if quoteLine == 0 {
 				out.WriteString("\n> ")
 			} else {
@@ -156,6 +162,12 @@ func secondPass(lines []string) string {
 			out.WriteString(trimmed)
 			out.WriteByte(newLine)
 			quoteLine++
+
+			if closeInline {
+				inQuote = false
+				quoteLine = 0
+				out.WriteByte(newLine)
+			}
 
 			lineNum++
 			continue
