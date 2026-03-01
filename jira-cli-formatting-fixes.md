@@ -32,7 +32,7 @@ Related but separate path:
 | codeBlock+language | Y | Y | Y | SUPPORTED |
 | table/row/cell/header | Y | Y | Y | SUPPORTED (known Wiki→MD bug when cells contain Jira links) |
 | panel (`{panel}`) | Y | Y | Y | SUPPORTED |
-| typed panels (`{info}`/`{warning}`/`{note}`/`{tip}`/`{error}`/`{success}`) | — | partial | partial | **PARTIAL** (Wiki→MD unsupported; MD→Wiki rewrites only pre-existing typed macros; ADF→MD drops `panelType` styling metadata) |
+| typed panels (`{info}`/`{warning}`/`{note}`/`{tip}`/`{error}`/`{success}`) | — | partial | partial | **PARTIAL** (Wiki→MD unsupported; MD→Wiki rewrites typed macros; Jira Cloud ADF collapses `tip`/`success` to `panelType=success`; ADF→MD now surfaces panel type labels but cannot recover original `tip` intent) |
 | rule (hr) | — | Y | — | **PARTIAL** (MD→Wiki only) |
 | expand | — | — | — | **NOT SUPPORTED** |
 | nestedExpand | — | — | — | **NOT SUPPORTED** |
