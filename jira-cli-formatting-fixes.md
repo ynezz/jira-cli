@@ -126,13 +126,15 @@ Prefer small, targeted fixtures instead of extending the existing monolithic gol
 
 **Files**: `pkg/md/jirawiki/parser.go` (lines 282-290, 482-501)
 
-**Root cause**: `tokenize()` claims the entire table line as one token. `handleTable()` does `strings.ReplaceAll(line, "||", "|")`, destroying `[text|url]` link syntax.
+**Root cause**:
+- Header lines are tokenized as a single table token, then `handleTable()` runs `strings.ReplaceAll(... "||" -> "|")` and `strings.Split(..., "|")`. This treats `|` inside `[text|url]` as a column separator and produces wrong column counts.
+- Body rows are mostly emitted as-is, so Jira link syntax inside cells (`[text|url]`) is not converted before markdown-table rendering.
 
 **Fix**:
-- New helper `splitTableCells(line string, isHeader bool) []string`
-- Tracks `[` / `]` bracket depth; only treats `|` as separator at depth 0
-- Convert `[text|url]` → `[text](url)` within each cell
-- Update `handleTable()` to use the new splitter
+- Add a depth-aware cell splitter for both header (`||`) and body (`|`) rows.
+- Track `[` / `]` bracket depth and treat separators only at depth 0.
+- Convert `[text|url]` → `[text](url)` inside each parsed cell before rejoining.
+- Update table rendering paths to use the same splitter and keep header/body column counts aligned.
 
 ### Bug 2: Code block escaping (investigate)
 
