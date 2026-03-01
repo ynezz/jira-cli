@@ -198,6 +198,9 @@ func (tr *MarkdownTranslator) Close(n Connector) string {
 			tr.table.rows = 0
 			tr.table.cols = 0
 			tr.table.sep = false
+			// Ensure there is a blank-line boundary after a table so any following
+			// paragraph/list is not parsed as an additional table row.
+			tag.WriteString("\n")
 		case ChildNodeTableRow:
 			tag.WriteString("\n")
 			if tr.table.sep {
