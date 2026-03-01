@@ -111,6 +111,7 @@ func normalizeCodeBlocks(input string) string {
 
 	inCodeBlock := false
 	useNoFormat := false
+	codeBlockStartIdx := -1
 	out := make([]string, 0, len(lines))
 
 	for idx, line := range lines {
@@ -120,6 +121,7 @@ func normalizeCodeBlocks(input string) string {
 			out = append(out, "{code:"+submatch[1]+"}")
 			inCodeBlock = true
 			useNoFormat = false
+			codeBlockStartIdx = len(out) - 1
 			continue
 		}
 
@@ -127,6 +129,7 @@ func normalizeCodeBlocks(input string) string {
 			out = append(out, line)
 			inCodeBlock = true
 			useNoFormat = false
+			codeBlockStartIdx = len(out) - 1
 			continue
 		}
 
@@ -140,14 +143,24 @@ func normalizeCodeBlocks(input string) string {
 					}
 					inCodeBlock = false
 					useNoFormat = false
+					codeBlockStartIdx = -1
 				} else {
-					// Keep literal macro text inside code content.
+					// Jira treats a literal `{code}` line as a closing macro in
+					// code-tagged blocks. Fallback to noformat for this block so
+					// the literal line remains intact in cloud rendering.
+					if !useNoFormat {
+						if codeBlockStartIdx >= 0 {
+							out[codeBlockStartIdx] = "{noformat}"
+						}
+						useNoFormat = true
+					}
 					out = append(out, line)
 				}
 			} else {
 				out = append(out, "{noformat}")
 				inCodeBlock = true
 				useNoFormat = true
+				codeBlockStartIdx = len(out) - 1
 			}
 			continue
 		}

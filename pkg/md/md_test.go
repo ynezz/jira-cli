@@ -370,8 +370,8 @@ func TestToJiraMD_CodeBlockLanguageMapping(t *testing.T) {
 		input := "```go\nline1\n{code}\nline3\n```\n"
 		result := ToJiraMD(input)
 
-		assert.Contains(t, result, "{code:go}\nline1\n{code}\nline3\n{code}")
-		assert.NotContains(t, result, "{noformat}\nline1")
+		assert.Contains(t, result, "{noformat}\nline1\n{code}\nline3\n{noformat}")
+		assert.NotContains(t, result, "{code:go}\nline1")
 	})
 }
 
