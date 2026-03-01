@@ -66,7 +66,7 @@ Three conversion paths in jira-cli:
 
 ---
 
-## Phase 1: Coverage expansion (target: +18 to +24 tests)
+## Phase 1: Coverage expansion (target: +18 to +26 tests)
 
 ### `pkg/md/jirawiki/parser_test.go` (target: +10 to +14)
 
