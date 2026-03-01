@@ -343,6 +343,26 @@ func TestToJiraMD_CodeBlockLanguageMapping(t *testing.T) {
 		assert.Contains(t, result, "\n{code}")
 		assert.NotContains(t, result, "{noformat}")
 	})
+
+	t.Run("literal code macro inside plain fenced block is preserved", func(t *testing.T) {
+		t.Parallel()
+
+		input := "```\nline1\n{code}\nline3\n```\n"
+		result := ToJiraMD(input)
+
+		assert.Contains(t, result, "{noformat}\nline1\n{code}\nline3\n{noformat}")
+		assert.Equal(t, 2, strings.Count(result, "{noformat}"))
+	})
+
+	t.Run("literal code macro inside language fenced block is preserved", func(t *testing.T) {
+		t.Parallel()
+
+		input := "```go\nline1\n{code}\nline3\n```\n"
+		result := ToJiraMD(input)
+
+		assert.Contains(t, result, "{code:go}\nline1\n{code}\nline3\n{code}")
+		assert.NotContains(t, result, "{noformat}\nline1")
+	})
 }
 
 func TestToJiraMD_ListIndentationNormalizerSkipsFencedCode(t *testing.T) {

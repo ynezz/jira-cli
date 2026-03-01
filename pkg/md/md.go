@@ -88,7 +88,7 @@ func normalizeCodeBlocks(input string) string {
 	useNoFormat := false
 	out := make([]string, 0, len(lines))
 
-	for _, line := range lines {
+	for idx, line := range lines {
 		trimmed := strings.TrimSpace(line)
 
 		if submatch := codeLanguagePattern.FindStringSubmatch(trimmed); len(submatch) == 2 {
@@ -107,13 +107,18 @@ func normalizeCodeBlocks(input string) string {
 
 		if trimmed == "{code}" {
 			if inCodeBlock {
-				if useNoFormat {
-					out = append(out, "{noformat}")
+				if shouldCloseCodeBlock(lines, idx) {
+					if useNoFormat {
+						out = append(out, "{noformat}")
+					} else {
+						out = append(out, "{code}")
+					}
+					inCodeBlock = false
+					useNoFormat = false
 				} else {
-					out = append(out, "{code}")
+					// Keep literal macro text inside code content.
+					out = append(out, line)
 				}
-				inCodeBlock = false
-				useNoFormat = false
 			} else {
 				out = append(out, "{noformat}")
 				inCodeBlock = true
@@ -131,6 +136,14 @@ func normalizeCodeBlocks(input string) string {
 	}
 
 	return output
+}
+
+func shouldCloseCodeBlock(lines []string, index int) bool {
+	if index >= len(lines)-1 {
+		return true
+	}
+
+	return strings.TrimSpace(lines[index+1]) == ""
 }
 
 func normalizeListIndentation(input string) string {
