@@ -151,9 +151,12 @@ Prefer small, targeted fixtures instead of extending the existing monolithic gol
 
 **File**: `pkg/adf/markdown.go`
 
-Test data includes underline marks but `MarkdownTranslator` has no handler for `MarkUnderline`.
+Test data includes underline marks, but there is no `MarkUnderline` type constant or renderer handling in the translator path.
 
-**Fix**: Add underline handling following strike pattern (lines 151-152).
+**Fix**:
+- Add `MarkUnderline` to ADF mark constants (`pkg/adf/adf.go`).
+- Decide explicit output format for underline in markdown (recommended: `<u>...</u>` since CommonMark has no native underline syntax).
+- Implement open/close handling in `MarkdownTranslator` and lock behavior with focused tests.
 
 ---
 
