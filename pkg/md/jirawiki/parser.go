@@ -121,10 +121,46 @@ func secondPass(lines []string) string {
 	var (
 		out     strings.Builder
 		lineNum int
+		inQuote bool
+		// quoteLine tracks line index inside a multiline {quote} block so we
+		// can format the first line with an opening newline and subsequent
+		// lines as contiguous quoted lines.
+		quoteLine int
 	)
 
 	for lineNum < len(lines) {
 		line := lines[lineNum]
+		trimmed := strings.TrimSpace(line)
+
+		if trimmed == TagQuote {
+			if inQuote {
+				inQuote = false
+				quoteLine = 0
+				out.WriteByte(newLine)
+			} else {
+				inQuote = true
+				quoteLine = 0
+			}
+
+			lineNum++
+			continue
+		}
+
+		if inQuote {
+			if quoteLine == 0 {
+				out.WriteString("\n> ")
+			} else {
+				out.WriteString("> ")
+			}
+
+			out.WriteString(trimmed)
+			out.WriteByte(newLine)
+			quoteLine++
+
+			lineNum++
+			continue
+		}
+
 		tokens := tokenize(line)
 
 		if len(tokens) == 0 {
@@ -166,6 +202,11 @@ func secondPass(lines []string) string {
 						// we've found a closing token, and we will ignore it.
 						if token.endIdx != len(line)-1 {
 							out.WriteString(fmt.Sprintf("\n%s", replacements[token.tag]))
+
+							if strings.Count(line, TagQuote) == 1 {
+								inQuote = true
+								quoteLine = 1
+							}
 						}
 					} else {
 						out.WriteString(fmt.Sprintf("\n%s", replacements[token.tag]))

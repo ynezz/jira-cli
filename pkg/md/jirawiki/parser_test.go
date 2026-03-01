@@ -307,6 +307,14 @@ func TestParseBlockQuote(t *testing.T) {
 			input:    "bq.",
 			expected: "\n>\n",
 		},
+		{
+			name: "blockquote containing list markers",
+			input: `{quote}
+* item one
+* item two
+{quote}`,
+			expected: "\n> * item one\n> * item two\n\n",
+		},
 	}
 
 	for _, tc := range cases {
