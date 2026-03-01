@@ -131,126 +131,150 @@ func secondPass(lines []string) string {
 
 	for lineNum < len(lines) {
 		line := lines[lineNum]
-		trimmed := strings.TrimSpace(line)
+		for {
+			trimmed := strings.TrimSpace(line)
 
-		if trimmed == TagQuote {
-			if inQuote {
-				inQuote = false
-				quoteLine = 0
-				out.WriteByte(newLine)
-			} else {
-				inQuote = true
-				quoteLine = 0
-			}
-
-			lineNum++
-			continue
-		}
-
-		if inQuote {
-			closeInline := false
-			quoteLineContent := line
-			if strings.HasSuffix(trimmed, TagQuote) && strings.Count(quoteLineContent, TagQuote) == 1 {
-				if idx := strings.LastIndex(quoteLineContent, TagQuote); idx >= 0 {
-					quoteLineContent = quoteLineContent[:idx] + quoteLineContent[idx+len(TagQuote):]
+			if trimmed == TagQuote {
+				if inQuote {
+					inQuote = false
+					quoteLine = 0
+					out.WriteByte(newLine)
+				} else {
+					inQuote = true
+					quoteLine = 0
 				}
-				closeInline = true
-			}
-			quoteLineContent = convertQuoteLineContent(quoteLineContent)
 
-			if quoteLine == 0 {
-				out.WriteString("\n> ")
-			} else {
-				out.WriteString("> ")
+				lineNum++
+				break
 			}
 
-			out.WriteString(quoteLineContent)
-			out.WriteByte(newLine)
-			quoteLine++
+			if inQuote {
+				closeIdx := strings.Index(line, TagQuote)
+				closeInline := closeIdx >= 0
+				trailingContent := ""
+				quoteLineContent := line
 
-			if closeInline {
-				inQuote = false
-				quoteLine = 0
-				out.WriteByte(newLine)
+				if closeInline {
+					quoteLineContent = line[:closeIdx]
+					trailingContent = line[closeIdx+len(TagQuote):]
+				}
+
+				// A leading closing tag (`{quote}text`) should close the quote
+				// block without creating an empty quoted line.
+				if !(closeInline && closeIdx == 0) {
+					quoteLineContent = convertQuoteLineContent(quoteLineContent)
+
+					if quoteLine == 0 {
+						out.WriteString("\n> ")
+					} else {
+						out.WriteString("> ")
+					}
+
+					out.WriteString(quoteLineContent)
+					out.WriteByte(newLine)
+					quoteLine++
+				}
+
+				if closeInline {
+					inQuote = false
+					quoteLine = 0
+					out.WriteByte(newLine)
+
+					if trailingContent != "" {
+						line = trailingContent
+						continue
+					}
+				}
+
+				lineNum++
+				break
 			}
 
-			lineNum++
-			continue
-		}
+			tokens := tokenize(line)
 
-		tokens := tokenize(line)
+			if len(tokens) == 0 {
+				out.WriteString(line)
 
-		if len(tokens) == 0 {
-			out.WriteString(line)
-
-			lineNum++
-			if lineNum < len(lines)-1 {
-				out.WriteByte(newLine)
+				lineNum++
+				if lineNum < len(lines)-1 {
+					out.WriteByte(newLine)
+				}
+				break
 			}
-			continue
-		}
 
-		var beg int
+			var (
+				beg             int
+				quoteTagsInLine = strings.Count(line, TagQuote)
+				seenQuoteTags   int
+			)
 
-	out:
-		for beg < len(line) {
-			end := beg
+		out:
+			for beg < len(line) {
+				end := beg
 
-			if token, ok := tokenStarts(beg, tokens); ok {
-				switch token.family {
-				case typeTagTextEffect:
-					end = token.handleTextEffects(line, &out)
-				case typeTagHeading:
-					end = token.handleHeadings(line, &out)
-				case typeTagInlineQuote:
-					end = token.handleInlineBlockQuote(line, &out)
-				case typeTagList:
-					end = token.handleList(line, &out)
-				case typeTagFencedCode:
-					lineNum = token.handleFencedCodeBlock(lineNum, lines, &out)
-					break out
-				case typeTagReferenceLink:
-					end = token.handleReferenceLink(line, &out)
-				case typeTagTable:
-					end = token.handleTable(line, &out)
-				case typeTagOther:
-					if token.tag == TagQuote {
-						// If end is same as size of the input, it implies that
-						// we've found a closing token, and we will ignore it.
-						if token.endIdx != len(line)-1 {
+				if token, ok := tokenStarts(beg, tokens); ok {
+					switch token.family {
+					case typeTagTextEffect:
+						end = token.handleTextEffects(line, &out)
+					case typeTagHeading:
+						end = token.handleHeadings(line, &out)
+					case typeTagInlineQuote:
+						end = token.handleInlineBlockQuote(line, &out)
+					case typeTagList:
+						end = token.handleList(line, &out)
+					case typeTagFencedCode:
+						lineNum = token.handleFencedCodeBlock(lineNum, lines, &out)
+						break out
+					case typeTagReferenceLink:
+						end = token.handleReferenceLink(line, &out)
+					case typeTagTable:
+						end = token.handleTable(line, &out)
+					case typeTagOther:
+						if token.tag == TagQuote {
+							seenQuoteTags++
+							isOpeningQuote := seenQuoteTags%2 == 1
+
+							if isOpeningQuote {
+								out.WriteString(fmt.Sprintf("\n%s", replacements[token.tag]))
+
+								// If there is an unmatched opening quote tag on this
+								// line, keep multiline quote mode active for the
+								// following lines.
+								if quoteTagsInLine%2 == 1 && seenQuoteTags == quoteTagsInLine {
+									inQuote = true
+									quoteLine = 1
+								}
+							} else if token.endIdx != len(line)-1 {
+								out.WriteByte(newLine)
+							}
+						} else {
 							out.WriteString(fmt.Sprintf("\n%s", replacements[token.tag]))
+						}
 
-							if strings.Count(line, TagQuote) == 1 {
-								inQuote = true
-								quoteLine = 1
+						if token.tag == TagPanel {
+							if t, ok := token.attrs[attrTitle]; ok {
+								out.WriteString(fmt.Sprintf("\n**%s**\n", t))
+							}
+
+							if token.endIdx != len(line)-1 {
+								out.WriteByte(newLine)
 							}
 						}
-					} else {
-						out.WriteString(fmt.Sprintf("\n%s", replacements[token.tag]))
+
+						end = token.endIdx
 					}
-
-					if token.tag == TagPanel {
-						if t, ok := token.attrs[attrTitle]; ok {
-							out.WriteString(fmt.Sprintf("\n**%s**\n", t))
-						}
-
-						if token.endIdx != len(line)-1 {
-							out.WriteByte(newLine)
-						}
-					}
-
-					end = token.endIdx
+				} else {
+					out.WriteRune(rune(line[beg]))
 				}
-			} else {
-				out.WriteRune(rune(line[beg]))
+
+				end++
+				beg = end
 			}
 
-			end++
-			beg = end
+			lineNum++
+			out.WriteByte(newLine)
+			break
 		}
-
-		lineNum++
-		out.WriteByte(newLine)
 	}
 
 	return out.String()

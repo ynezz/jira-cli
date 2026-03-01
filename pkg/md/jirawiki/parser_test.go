@@ -298,6 +298,11 @@ func TestParseBlockQuote(t *testing.T) {
 			expected: "\n> Blockquote {without} ending new line\n",
 		},
 		{
+			name:     "one line blockquote closes before trailing text",
+			input:    "{quote}a{quote}tail",
+			expected: "\n> a\ntail\n",
+		},
+		{
 			name:     "unclosed blockquote",
 			input:    "{quote}Blockquote {without} closing and a *bold* text",
 			expected: "\n> Blockquote {without} closing and a **bold** text\n",
@@ -327,6 +332,13 @@ line one
 line two{quote}
 outside`,
 			expected: "\n> line one\n> line two\n\noutside",
+		},
+		{
+			name: "multiline blockquote closes before trailing text on same line",
+			input: `{quote}
+line one
+{quote}outside`,
+			expected: "\n> line one\n\noutside",
 		},
 		{
 			name: "multiline blockquote preserves leading and trailing spaces",
