@@ -11,10 +11,13 @@ The `jira` CLI (ankitpokhrel/jira-cli, forked at `ynezz/jira-cli`) has confirmed
 
 ## ADF Support Matrix (current state)
 
-Three conversion paths in jira-cli:
+Three main conversion paths relevant to formatting fixes:
 - **Wiki→MD**: `pkg/md/jirawiki/parser.go` (Jira wiki markup → CommonMark)
 - **MD→Wiki**: `pkg/md/md.go` + `github.com/kentaro-m/blackfriday-confluence` renderer (CommonMark → Jira wiki)
-- **ADF→MD**: `pkg/adf/markdown.go` + `jiramarkdown.go` (ADF JSON → CommonMark for terminal display)
+- **ADF→MD (terminal rendering)**: `pkg/adf/markdown.go` via `adf.NewMarkdownTranslator()` (ADF JSON → CommonMark)
+
+Related but separate path:
+- **ADF→Jira wiki (edit bootstrap)**: `pkg/adf/jiramarkdown.go` via `adf.NewJiraMarkdownTranslator()`
 
 ### Block Nodes
 
