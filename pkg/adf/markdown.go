@@ -75,8 +75,8 @@ func (tr *MarkdownTranslator) Open(n Connector, _ int) string {
 
 	if hook, ok := tr.openHooks[nt]; ok {
 		tag.WriteString(hook(n))
-	} else {
-		switch nt {
+		} else {
+			switch nt {
 		case NodeBlockquote:
 			tag.WriteString("> ")
 		case NodeCodeBlock:
@@ -95,8 +95,8 @@ func (tr *MarkdownTranslator) Open(n Connector, _ int) string {
 			if nl {
 				tag.WriteString("\n")
 			}
-		case NodePanel:
-			tag.WriteString("---\n")
+			case NodePanel:
+				tag.WriteString(fmt.Sprintf("[%s] ---\n", panelTypeLabel(attrs)))
 		case NodeTable:
 			tag.WriteString("\n")
 		case NodeMedia:
@@ -160,6 +160,29 @@ func (tr *MarkdownTranslator) Open(n Connector, _ int) string {
 	tag.WriteString(tr.setOpenTagAttributes(attrs))
 
 	return tag.String()
+}
+
+func panelTypeLabel(attrs any) string {
+	if attrs == nil {
+		return "PANEL"
+	}
+
+	a, ok := attrs.(map[string]any)
+	if !ok {
+		return "PANEL"
+	}
+
+	panelType, ok := a["panelType"]
+	if !ok {
+		return "PANEL"
+	}
+
+	panelTypeValue, ok := panelType.(string)
+	if !ok || panelTypeValue == "" {
+		return "PANEL"
+	}
+
+	return strings.ToUpper(panelTypeValue)
 }
 
 // Close implements TagCloser interface.

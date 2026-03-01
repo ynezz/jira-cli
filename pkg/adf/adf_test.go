@@ -26,6 +26,8 @@ func TestADF(t *testing.T) {
 		"Table row 2 column 1 | Table row 2 column 2 | Table row 2 column 3\n\n```go",
 		1,
 	)
+	expected = strings.Replace(expected, "\n---\nPanel paragraph", "\n[INFO] ---\nPanel paragraph", 1)
+	expected = strings.Replace(expected, "\n---\n **Strong** Paragraph 1", "\n[WARNING] ---\n **Strong** Paragraph 1", 1)
 	expected += "\n"
 	assert.Equal(t, expected, tr.Translate())
 }
@@ -139,6 +141,36 @@ func TestMarkdownTranslatorCodeBlockPreservesLanguage(t *testing.T) {
 	out := newMarkdownTranslator(doc)
 	assert.Contains(t, out, "```python")
 	assert.Contains(t, out, `print("hi")`)
+}
+
+func TestMarkdownTranslatorPanelIncludesTypeIndicator(t *testing.T) {
+	doc := &ADF{
+		Version: 1,
+		DocType: "doc",
+		Content: []*Node{
+			{
+				NodeType:   NodePanel,
+				Attributes: map[string]any{"panelType": "warning"},
+				Content: []*Node{
+					{
+						NodeType: NodeParagraph,
+						Content: []*Node{
+							{
+								NodeType: ChildNodeText,
+								NodeValue: NodeValue{
+									Text: "warning text",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	out := newMarkdownTranslator(doc)
+	assert.Contains(t, out, "[WARNING] ---")
+	assert.Contains(t, out, "warning text")
 }
 
 func TestMarkdownTranslatorTableCellPipeCurrentBehavior(t *testing.T) {
