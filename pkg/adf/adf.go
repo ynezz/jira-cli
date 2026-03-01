@@ -35,11 +35,11 @@ const (
 	InlineNodeMention   = NodeType("mention")
 	InlineNodeHardBreak = NodeType("hardBreak")
 
-	MarkEm     = NodeType("em")
-	MarkLink   = NodeType("link")
-	MarkCode   = NodeType("code")
-	MarkStrike = NodeType("strike")
-	MarkStrong = NodeType("strong")
+	MarkEm        = NodeType("em")
+	MarkLink      = NodeType("link")
+	MarkCode      = NodeType("code")
+	MarkStrike    = NodeType("strike")
+	MarkStrong    = NodeType("strong")
 	MarkUnderline = NodeType("underline")
 )
 

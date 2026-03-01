@@ -117,6 +117,7 @@ Second pass: actual rendering.
   - Process each line to search and mark tags.
   - Use replacements to prepare markdown.
 */
+//nolint:gocyclo
 func secondPass(lines []string) string {
 	var (
 		out     strings.Builder

@@ -75,8 +75,8 @@ func (tr *MarkdownTranslator) Open(n Connector, _ int) string {
 
 	if hook, ok := tr.openHooks[nt]; ok {
 		tag.WriteString(hook(n))
-		} else {
-			switch nt {
+	} else {
+		switch nt {
 		case NodeBlockquote:
 			tag.WriteString("> ")
 		case NodeCodeBlock:
@@ -95,8 +95,8 @@ func (tr *MarkdownTranslator) Open(n Connector, _ int) string {
 			if nl {
 				tag.WriteString("\n")
 			}
-			case NodePanel:
-				tag.WriteString(fmt.Sprintf("[%s] ---\n", panelTypeLabel(attrs)))
+		case NodePanel:
+			tag.WriteString(fmt.Sprintf("[%s] ---\n", panelTypeLabel(attrs)))
 		case NodeTable:
 			tag.WriteString("\n")
 		case NodeMedia:
