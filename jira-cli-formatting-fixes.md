@@ -2,7 +2,7 @@
 
 ## Context
 
-The `jira` CLI (ankitpokhrel/jira-cli, forked at `ynezz/jira-cli`) has formatting bugs in its wiki markup conversion that break links in tables, escape code block content, and miss some ADF marks. This plan adds comprehensive test coverage for ALL supported ADF formatting elements and fixes the known bugs.
+The `jira` CLI (ankitpokhrel/jira-cli, forked at `ynezz/jira-cli`) has confirmed formatting bugs in wiki table/link handling and several ADF rendering gaps. A separate code-block escaping issue has been reported historically, but should be treated as a hypothesis until reproduced on the current commit. This plan focuses on high-risk coverage and targeted fixes for confirmed gaps first.
 
 **Repo**: `/data/projects/jira-cli` (branch: `ynezz/issue-attachments`)
 **Installed**: v1.7.0-ynezz.2
@@ -13,7 +13,7 @@ The `jira` CLI (ankitpokhrel/jira-cli, forked at `ynezz/jira-cli`) has formattin
 
 Three conversion paths in jira-cli:
 - **Wiki→MD**: `pkg/md/jirawiki/parser.go` (Jira wiki markup → CommonMark)
-- **MD→Wiki**: `vendor/github.com/kentaro-m/blackfriday-confluence/confluence.go` (CommonMark → Jira wiki)
+- **MD→Wiki**: `pkg/md/md.go` + `github.com/kentaro-m/blackfriday-confluence` renderer (CommonMark → Jira wiki)
 - **ADF→MD**: `pkg/adf/markdown.go` + `jiramarkdown.go` (ADF JSON → CommonMark for terminal display)
 
 ### Block Nodes
@@ -28,11 +28,12 @@ Three conversion paths in jira-cli:
 | blockquote | Y | Y | Y | SUPPORTED |
 | codeBlock+language | Y | Y | Y | SUPPORTED |
 | table/row/cell/header | Y | Y | Y | SUPPORTED (BUG: links in cells) |
-| panel (5 types) | Y | Y | Y | SUPPORTED |
+| panel (`{panel}`) | Y | Y | Y | SUPPORTED |
+| typed panels (`{info}`/`{warning}`/`{note}`/`{tip}`/`{error}`) | — | partial | partial | **PARTIAL** (not parsed by Wiki→MD parser) |
 | rule (hr) | — | Y | — | **PARTIAL** (MD→Wiki only) |
 | expand | — | — | — | **NOT SUPPORTED** |
 | nestedExpand | — | — | — | **NOT SUPPORTED** |
-| mediaSingle/Group | — | — | partial | **PARTIAL** (renders as "[attachment]") |
+| mediaSingle/Group | — | — | partial | **PARTIAL** (only inner `media` nodes render as "[attachment]") |
 | multiBodiedExtension | — | — | — | **NOT SUPPORTED** |
 
 ### Inline Nodes
@@ -41,9 +42,9 @@ Three conversion paths in jira-cli:
 |----------|---------|---------|--------|--------|
 | text | Y | Y | Y | SUPPORTED |
 | hardBreak | Y | Y | Y | SUPPORTED |
-| mention | — | — | partial | **PARTIAL** (ID lost) |
-| emoji | — | — | partial | **PARTIAL** (renders as space) |
-| inlineCard | — | — | partial | **PARTIAL** (URL lost) |
+| mention | — | — | partial | **PARTIAL** (display text rendered, account ID not rendered) |
+| emoji | — | — | partial | **PARTIAL** (output depends on `attrs.text`; no shortcode fallback) |
+| inlineCard | — | — | partial | **PARTIAL** (renders a pin marker plus URL, no title/metadata) |
 | date | — | — | — | **NOT SUPPORTED** |
 | status | — | — | — | **NOT SUPPORTED** |
 | mediaInline | — | — | — | **NOT SUPPORTED** |
