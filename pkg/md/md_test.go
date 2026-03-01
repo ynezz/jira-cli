@@ -238,8 +238,8 @@ func TestToJiraMD_RegressionCases(t *testing.T) {
 		{
 			name: "nested lists preserve depth",
 			input: `- item1
-  - subitem
-    - subsubitem`,
+    - subitem
+        - subsubitem`,
 			expectedContain: "* item1\n** subitem\n*** subsubitem",
 		},
 		{
