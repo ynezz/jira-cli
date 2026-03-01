@@ -186,7 +186,29 @@ GoReleaser configuration ([`.goreleaser.yml`](../../.goreleaser.yml)):
 - **Homebrew:** Formula generated (skip_upload: true — manual publish)
 - **Release:** Draft mode, prerelease auto-detected from tag
 
-### 3.3 Post release summary on release bead
+### 3.3 Publish GitHub release notes and promote draft
+
+GoReleaser creates a draft release in this repository. Publish it with
+explicit release notes and the intended stability flag:
+
+```bash
+gh release view v<VERSION> --json isDraft,isPrerelease,body,url
+gh release edit v<VERSION> \
+  --notes-file /tmp/release-notes.md \
+  --draft=false \
+  --prerelease=false \
+  --target <tag-commit-sha>
+```
+
+Notes:
+
+- Tags with a semver suffix like `-ynezz.5` are auto-detected as prerelease.
+  Set `--prerelease=false` when you intend to publish a stable release.
+- Keep `--prerelease=true` for RC/beta/nightly style tags.
+- Ensure notes include user-visible changes, validation evidence, and links to
+  QA artifacts.
+
+### 3.4 Post release summary on release bead
 
 Include in the bead close reason or a comment:
 
@@ -194,13 +216,13 @@ Include in the bead close reason or a comment:
 - Artifact/build output reference
 - Link to manual QA result (probe issue key, pass/fail summary)
 
-### 3.4 Close release bead
+### 3.5 Close release bead
 
 ```bash
 br close <release-bead> --reason "v<VERSION> released, QA passed" --json
 ```
 
-### 3.5 Sync beads
+### 3.6 Sync beads
 
 ```bash
 br sync --flush-only
@@ -216,7 +238,7 @@ git push
 |---|---|---|---|
 | 1. Manual QA | All case IDs pass (forward + reverse) | task | `bd-258` |
 | 2. Tag | `go test -race` + `ubs` pass, blockers closed | task | `bd-157` |
-| 3. Release | CI GoReleaser succeeds, summary posted | task | `bd-9vc` |
+| 3. Release | CI succeeds, release published with notes | task | `bd-9vc` |
 
 ## See Also
 
