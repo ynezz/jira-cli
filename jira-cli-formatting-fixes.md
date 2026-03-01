@@ -29,7 +29,7 @@ Three conversion paths in jira-cli:
 | codeBlock+language | Y | Y | Y | SUPPORTED |
 | table/row/cell/header | Y | Y | Y | SUPPORTED (BUG: links in cells) |
 | panel (`{panel}`) | Y | Y | Y | SUPPORTED |
-| typed panels (`{info}`/`{warning}`/`{note}`/`{tip}`/`{error}`) | — | partial | partial | **PARTIAL** (not parsed by Wiki→MD parser) |
+| typed panels (`{info}`/`{warning}`/`{note}`/`{tip}`/`{error}`/`{success}`) | — | partial | partial | **PARTIAL** (not parsed by Wiki→MD parser) |
 | rule (hr) | — | Y | — | **PARTIAL** (MD→Wiki only) |
 | expand | — | — | — | **NOT SUPPORTED** |
 | nestedExpand | — | — | — | **NOT SUPPORTED** |
@@ -175,13 +175,14 @@ Test data includes underline marks, but there is no `MarkUnderline` type constan
 
 | File | Changes |
 |------|---------|
-| `pkg/md/jirawiki/parser.go` | Add `splitTableCells()`, update `handleTable()` |
-| `pkg/md/jirawiki/parser_test.go` | Add ~20 test cases across existing test functions |
-| `pkg/md/md.go` | Possible post-processing for code block escaping |
-| `pkg/md/md_test.go` | Add ~7 test cases for MD→Wiki direction |
-| `pkg/adf/markdown.go` | Add underline mark handling |
-| `pkg/adf/adf_test.go` | Add ~7 test cases for ADF→MD direction |
-| `vendor/.../confluence.go` | Possible patch for code block escaping |
+| `pkg/md/jirawiki/parser.go` | Add depth-aware table cell splitting and aligned header/body rendering |
+| `pkg/md/jirawiki/parser_test.go` | Add targeted Wiki→MD regressions (+10 to +14) |
+| `pkg/md/md_test.go` | Add targeted MD→Wiki regressions (+5 to +7) |
+| `pkg/adf/adf.go` | Add `MarkUnderline` constant |
+| `pkg/adf/markdown.go` | Add underline mark rendering logic |
+| `pkg/adf/adf_test.go` | Add focused ADF→MD fixtures (+3 to +5) |
+| `pkg/md/md.go` | Update only if code-block escaping bug is reproduced |
+| `go.mod` / `go.sum` | Update only if a temporary renderer fork/replace is required |
 
 ## Verification
 
