@@ -82,7 +82,7 @@ Use stable case IDs from `golden-jira-issue.json` when recording failures.
 | Ordered list depth 0/1/2 | `TC-ORDERED-LIST-3LVL` |
 | Unordered list depth 0/1/2 | `TC-UNORDERED-LIST-3LVL` |
 | Rich multi-paragraph blockquote | `TC-BLOCKQUOTE-MULTIPARA` |
-| Typed panels info/warning/note/tip/error/success | `TC-PANELS-TYPED` |
+| Typed panels info/warning/note/error/success (+ tip alias) | `TC-PANELS-TYPED` |
 | Horizontal rule separator | `TC-HR` |
 
 ## Forward Rendering Checklist (Web UI)
@@ -96,13 +96,13 @@ Use stable case IDs from `golden-jira-issue.json` when recording failures.
 - [ ] `TC-ORDERED-LIST-3LVL`: Ordered list depth 0/1/2 renders correctly
 - [ ] `TC-UNORDERED-LIST-3LVL`: Unordered list depth 0/1/2 renders correctly
 - [ ] `TC-BLOCKQUOTE-MULTIPARA`: Blockquote rich text/multi-paragraph renders correctly
-- [ ] `TC-PANELS-TYPED`: Panels render and are distinguishable by type
+- [ ] `TC-PANELS-TYPED`: Panels render by expected cloud types; tip/success share the green success-style panel and must remain distinguishable by title/content
 - [ ] `TC-HR`: Horizontal rule renders as separator
 
 ## Reverse Rendering Checklist (CLI)
 
 - [ ] `TC-TABLE-LINKS`: `--plain` output keeps table boundary clean
-- [ ] `TC-PANELS-TYPED`: `--plain` output shows panel type indicators
+- [ ] `TC-PANELS-TYPED`: `--plain` output shows panel indicators; tip/success may both appear as `[SUCCESS]` and should be distinguished by panel title/content
 - [ ] `TC-BLOCKQUOTE-MULTIPARA`: Multi-paragraph blockquote remains readable
 - [ ] `TC-CODEBLOCK-LANG`, `TC-CODEBLOCK-PLAIN`: Code blocks and inline code are readable
 - [ ] `TC-LINK-VARIANTS`: No unintended escaping/corruption in rendered URLs/text

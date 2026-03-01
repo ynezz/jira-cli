@@ -12,6 +12,10 @@ import (
 )
 
 // Panel type to background color mapping (from ADF spec).
+//
+// Jira Cloud ADF does not expose a distinct "tip" panelType. Both tip and
+// success map to the same green panel representation, so tip/success semantic
+// distinction must be preserved through panel content/title when needed.
 var panelColors = map[string]string{
 	"info":    "#deebff",
 	"note":    "#eae6ff",

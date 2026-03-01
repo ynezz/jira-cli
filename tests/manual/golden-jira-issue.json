@@ -106,7 +106,7 @@
     {
       "id": "TC-PANELS-TYPED",
       "category": "panels",
-      "description": "Typed Jira panels render with distinct type semantics.",
+      "description": "Typed Jira panels render with cloud-supported semantics; tip and success share green success-style panelType and must be distinguished by title/content.",
       "covers": [
         "panel_info",
         "panel_warning",
@@ -207,7 +207,7 @@
         "case_ids": [
           "TC-PANELS-TYPED"
         ],
-        "description": "Typed panels render and remain distinguishable by type."
+        "description": "Typed panels render with expected cloud semantics; tip/success may share success-style type and must remain distinguishable by title/content."
       },
       {
         "id": "CHK-FWD-HR",
@@ -231,7 +231,7 @@
         "case_ids": [
           "TC-PANELS-TYPED"
         ],
-        "description": "Plain output includes panel type indicators."
+        "description": "Plain output includes panel indicators; tip/success may both appear as SUCCESS and should be differentiated by panel title/content."
       },
       {
         "id": "CHK-REV-PLAIN-BLOCKQUOTE",
