@@ -1,0 +1,272 @@
+{
+  "metadata": {
+    "name": "jira-cloud-manual-formatting-golden",
+    "version": "1.0.0",
+    "jira_target": "cloud"
+  },
+  "issue": {
+    "title_template": "Manual QA Formatting Probe - <YYYY-MM-DD>",
+    "description_markdown_file": "tests/manual/golden-jira-issue.md"
+  },
+  "cases": [
+    {
+      "id": "TC-H1-H6",
+      "category": "headings",
+      "description": "Heading levels H1 through H6 render with expected hierarchy.",
+      "covers": [
+        "heading_h1",
+        "heading_h2",
+        "heading_h3",
+        "heading_h4",
+        "heading_h5",
+        "heading_h6"
+      ]
+    },
+    {
+      "id": "TC-INLINE-STYLES",
+      "category": "inline-formatting",
+      "description": "Bold, italic, strikethrough, underline, and inline code formatting.",
+      "covers": [
+        "bold",
+        "italic",
+        "strikethrough",
+        "underline",
+        "inline_code"
+      ]
+    },
+    {
+      "id": "TC-TABLE-LINKS",
+      "category": "tables",
+      "description": "Tables with links in cells preserve boundaries, alignment, and link targets.",
+      "covers": [
+        "table_layout",
+        "table_cell_links",
+        "table_alignment"
+      ]
+    },
+    {
+      "id": "TC-LINK-VARIANTS",
+      "category": "links",
+      "description": "Normal links, query-string links, and bare URLs render and round-trip cleanly.",
+      "covers": [
+        "markdown_link",
+        "query_link",
+        "bare_url"
+      ]
+    },
+    {
+      "id": "TC-CODEBLOCK-LANG",
+      "category": "code-blocks",
+      "description": "Fenced code block with language marker keeps language metadata and formatting.",
+      "covers": [
+        "fenced_code_language",
+        "code_whitespace"
+      ]
+    },
+    {
+      "id": "TC-CODEBLOCK-PLAIN",
+      "category": "code-blocks",
+      "description": "Fenced code block without language keeps literal content and special chars.",
+      "covers": [
+        "fenced_code_no_language",
+        "macro_literal_text",
+        "special_characters"
+      ]
+    },
+    {
+      "id": "TC-ORDERED-LIST-3LVL",
+      "category": "lists",
+      "description": "Ordered lists render nested depth 0/1/2 correctly.",
+      "covers": [
+        "ordered_depth_0",
+        "ordered_depth_1",
+        "ordered_depth_2"
+      ]
+    },
+    {
+      "id": "TC-UNORDERED-LIST-3LVL",
+      "category": "lists",
+      "description": "Unordered lists render nested depth 0/1/2 correctly.",
+      "covers": [
+        "unordered_depth_0",
+        "unordered_depth_1",
+        "unordered_depth_2"
+      ]
+    },
+    {
+      "id": "TC-BLOCKQUOTE-MULTIPARA",
+      "category": "blockquote",
+      "description": "Multi-paragraph blockquote with rich content remains readable and separated.",
+      "covers": [
+        "blockquote_paragraph_1",
+        "blockquote_paragraph_2",
+        "blockquote_inline_formatting"
+      ]
+    },
+    {
+      "id": "TC-PANELS-TYPED",
+      "category": "panels",
+      "description": "Typed Jira panels render with distinct type semantics.",
+      "covers": [
+        "panel_info",
+        "panel_warning",
+        "panel_note",
+        "panel_tip",
+        "panel_error",
+        "panel_success"
+      ]
+    },
+    {
+      "id": "TC-HR",
+      "category": "separators",
+      "description": "Horizontal rule renders as a visual separator.",
+      "covers": [
+        "horizontal_rule"
+      ]
+    }
+  ],
+  "verification_targets": {
+    "forward_path": "Markdown -> Jira Wiki -> Jira ADF -> Jira Web UI",
+    "reverse_path": "Jira ADF -> jira issue view --plain/--raw",
+    "expected_checks": [
+      {
+        "id": "CHK-FWD-TABLE-BOUNDARY",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-TABLE-LINKS"
+        ],
+        "description": "Tables render with expected boundaries and aligned columns."
+      },
+      {
+        "id": "CHK-FWD-TABLE-LINKS",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-TABLE-LINKS"
+        ],
+        "description": "Links in table cells are preserved and clickable."
+      },
+      {
+        "id": "CHK-FWD-HEADINGS",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-H1-H6"
+        ],
+        "description": "Heading hierarchy H1..H6 is preserved."
+      },
+      {
+        "id": "CHK-FWD-INLINE",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-INLINE-STYLES"
+        ],
+        "description": "Inline styles are visually distinct."
+      },
+      {
+        "id": "CHK-FWD-CODE-LANG",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-CODEBLOCK-LANG"
+        ],
+        "description": "Language-tagged fenced block preserves language formatting."
+      },
+      {
+        "id": "CHK-FWD-CODE-PLAIN",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-CODEBLOCK-PLAIN"
+        ],
+        "description": "Non-language fenced block stays plain and literal."
+      },
+      {
+        "id": "CHK-FWD-ORDERED",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-ORDERED-LIST-3LVL"
+        ],
+        "description": "Ordered list depth 0/1/2 renders correctly."
+      },
+      {
+        "id": "CHK-FWD-UNORDERED",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-UNORDERED-LIST-3LVL"
+        ],
+        "description": "Unordered list depth 0/1/2 renders correctly."
+      },
+      {
+        "id": "CHK-FWD-BLOCKQUOTE",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-BLOCKQUOTE-MULTIPARA"
+        ],
+        "description": "Multi-paragraph blockquote renders with paragraph separation."
+      },
+      {
+        "id": "CHK-FWD-PANELS",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-PANELS-TYPED"
+        ],
+        "description": "Typed panels render and remain distinguishable by type."
+      },
+      {
+        "id": "CHK-FWD-HR",
+        "surface": "web_ui",
+        "case_ids": [
+          "TC-HR"
+        ],
+        "description": "Horizontal rule renders as a separator."
+      },
+      {
+        "id": "CHK-REV-PLAIN-TABLE",
+        "surface": "cli_plain",
+        "case_ids": [
+          "TC-TABLE-LINKS"
+        ],
+        "description": "Plain output keeps table boundaries readable."
+      },
+      {
+        "id": "CHK-REV-PLAIN-PANELS",
+        "surface": "cli_plain",
+        "case_ids": [
+          "TC-PANELS-TYPED"
+        ],
+        "description": "Plain output includes panel type indicators."
+      },
+      {
+        "id": "CHK-REV-PLAIN-BLOCKQUOTE",
+        "surface": "cli_plain",
+        "case_ids": [
+          "TC-BLOCKQUOTE-MULTIPARA"
+        ],
+        "description": "Plain output preserves multi-paragraph quoted content."
+      },
+      {
+        "id": "CHK-REV-PLAIN-CODE",
+        "surface": "cli_plain",
+        "case_ids": [
+          "TC-CODEBLOCK-LANG",
+          "TC-CODEBLOCK-PLAIN",
+          "TC-INLINE-STYLES"
+        ],
+        "description": "Plain output preserves code fences and inline code readability."
+      },
+      {
+        "id": "CHK-REV-PLAIN-LINKS",
+        "surface": "cli_plain",
+        "case_ids": [
+          "TC-LINK-VARIANTS"
+        ],
+        "description": "Plain output avoids unintended escaping or link corruption."
+      },
+      {
+        "id": "CHK-REV-RAW-ADF-HEADINGS",
+        "surface": "cli_raw",
+        "case_ids": [
+          "TC-H1-H6"
+        ],
+        "description": "Raw output contains expected heading node hierarchy in ADF."
+      }
+    ]
+  }
+}
