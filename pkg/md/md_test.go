@@ -244,6 +244,17 @@ func TestToJiraMD_RegressionCases(t *testing.T) {
 			expectedContain: "* item1\n** subitem\n*** subsubitem",
 		},
 		{
+			name: "nested lists with 2-space indentation preserve depth",
+			input: `- Apple
+- Banana
+  - Yellow banana
+  - Green banana
+    - Very green banana
+    - Slightly green banana
+- Cherry`,
+			expectedContain: "* Apple\n* Banana\n** Yellow banana\n** Green banana\n*** Very green banana\n*** Slightly green banana\n* Cherry",
+		},
+		{
 			name:            "combined bold italic code mark nesting",
 			input:           "**bold _italic `code`_**",
 			expectedContain: "*bold _italic {{code}}_*",
@@ -331,4 +342,14 @@ func TestToJiraMD_CodeBlockLanguageMapping(t *testing.T) {
 		assert.Contains(t, result, "\n{code}")
 		assert.NotContains(t, result, "{noformat}")
 	})
+}
+
+func TestToJiraMD_ListIndentationNormalizerSkipsFencedCode(t *testing.T) {
+	t.Parallel()
+
+	input := "```\n  - keep spacing\n    - keep spacing too\n```\n\n- list\n  - nested\n"
+	result := ToJiraMD(input)
+
+	assert.Contains(t, result, "{noformat}\n  - keep spacing\n    - keep spacing too\n{noformat}")
+	assert.Contains(t, result, "* list\n** nested")
 }

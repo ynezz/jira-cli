@@ -25,6 +25,9 @@ var panelColors = map[string]string{
 // Capture groups: 1=panel type, 2=optional attributes, 3=content, 4=closing type.
 var typedPanelPattern = regexp.MustCompile(`(?s)\{(info|warning|note|tip|error|success)(?::([^}]*))?\}(.*?)\{(info|warning|note|tip|error|success)\}`)
 
+// markdownListPattern matches a markdown list item with space indentation.
+var markdownListPattern = regexp.MustCompile(`^([ ]*)([*+-]|\d+\.)\s+`)
+
 // codeLanguagePattern matches renderer output line for typed code blocks.
 var codeLanguagePattern = regexp.MustCompile(`^\{code:language=([^}\r\n]+)\}$`)
 
@@ -127,6 +130,81 @@ func normalizeCodeBlocks(input string) string {
 	return output
 }
 
+func normalizeListIndentation(input string) string {
+	if input == "" {
+		return input
+	}
+
+	hasTrailingNewline := strings.HasSuffix(input, "\n")
+	trimmedInput := strings.TrimSuffix(input, "\n")
+	lines := strings.Split(trimmedInput, "\n")
+
+	inFencedCode := false
+	minIndent := 0
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "```") {
+			inFencedCode = !inFencedCode
+			continue
+		}
+		if inFencedCode {
+			continue
+		}
+
+		match := markdownListPattern.FindStringSubmatch(line)
+		if len(match) < 2 {
+			continue
+		}
+
+		indent := len(match[1])
+		if indent == 0 {
+			continue
+		}
+
+		if minIndent == 0 || indent < minIndent {
+			minIndent = indent
+		}
+	}
+
+	// Preserve existing behavior for 4-space style lists and normalize only
+	// the common 2-space nested list style.
+	if minIndent != 2 {
+		return input
+	}
+
+	inFencedCode = false
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "```") {
+			inFencedCode = !inFencedCode
+			continue
+		}
+		if inFencedCode {
+			continue
+		}
+
+		match := markdownListPattern.FindStringSubmatch(line)
+		if len(match) < 2 {
+			continue
+		}
+
+		indent := len(match[1])
+		if indent == 0 || indent%2 != 0 {
+			continue
+		}
+
+		lines[i] = strings.Repeat(" ", indent*2) + line[indent:]
+	}
+
+	output := strings.Join(lines, "\n")
+	if hasTrailingNewline {
+		output += "\n"
+	}
+
+	return output
+}
+
 // ToJiraMD translates CommonMark to Jira flavored markdown.
 func ToJiraMD(md string) string {
 	if md == "" {
@@ -135,6 +213,7 @@ func ToJiraMD(md string) string {
 
 	// Convert typed panels ({info}, {warning}, etc.) to {panel:bgColor=...} format
 	md = convertTypedPanels(md)
+	md = normalizeListIndentation(md)
 
 	renderer := &cf.Renderer{Flags: cf.IgnoreMacroEscaping}
 	r := bf.New(bf.WithRenderer(renderer), bf.WithExtensions(bf.CommonExtensions))
