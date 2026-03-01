@@ -106,7 +106,7 @@ Add focused `TestToJiraMD` (markdown → Jira wiki) cases:
 18. Combined bold+italic+code mark nesting
 19. All heading levels (1-6)
 20. Blockquote containing nested rich text
-21. Typed panel conversion (`{info}` / `{warning}`) through `ToJiraMD`
+21. Mismatched typed panel tags are not rewritten (e.g., `{info}x{warning}`)
 
 Gate any code-block escaping test on a reproducible failing fixture from current HEAD.
 
@@ -117,7 +117,7 @@ Add focused ADF→Markdown fixtures:
 23. Inline card node renders URL text
 24. Underline mark behavior (after implementation decision)
 25. Code block preserves language attribute handling
-26. Table cell text containing link-like content is not split incorrectly
+26. Table cell text containing literal `|` is handled intentionally (escaped or documented as unsupported)
 
 Prefer small, targeted fixtures instead of extending the existing monolithic golden string only.
 
