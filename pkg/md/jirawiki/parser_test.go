@@ -676,6 +676,11 @@ func TestTables(t *testing.T) {
 `,
 		},
 		{
+			name:     "bare double pipe should not panic",
+			input:    "||",
+			expected: "||\n|---|\n",
+		},
+		{
 			name: "invalid table",
 			input: `||heading 1||heading 2||heading 3
 |col A1|col A2|col A3|`,

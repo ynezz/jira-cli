@@ -511,7 +511,12 @@ func splitTableCells(line, separator string) []string {
 		return []string{line}
 	}
 
-	body := line[len(separator) : len(line)-len(separator)]
+	start := len(separator)
+	end := len(line) - len(separator)
+	if start > end {
+		return []string{""}
+	}
+	body := line[start:end]
 
 	var (
 		cells   []string
