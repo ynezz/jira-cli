@@ -4,7 +4,7 @@
 
 The `jira` CLI (ankitpokhrel/jira-cli, forked at `ynezz/jira-cli`) has formatting bugs in its wiki markup conversion that break links in tables, escape code block content, and miss some ADF marks. This plan adds comprehensive test coverage for ALL supported ADF formatting elements and fixes the known bugs.
 
-**Repo**: `/var/home/ynezz/dev/go/jira-cli` (branch: `ynezz/issue-attachments`)
+**Repo**: `/data/projects/jira-cli` (branch: `ynezz/issue-attachments`)
 **Installed**: v1.7.0-ynezz.2
 
 ---
@@ -187,6 +187,6 @@ Test data includes underline marks but `MarkdownTranslator` has no handler for `
 
 ## Verification
 
-- `cd /var/home/ynezz/dev/go/jira-cli && go test -race ./pkg/md/... ./pkg/adf/...`
+- `cd /data/projects/jira-cli && go test -race ./pkg/md/... ./pkg/adf/...`
 - Manual: create ticket with all supported formatting elements
 - Verify in Jira web UI at prplfoundationcloud.atlassian.net
