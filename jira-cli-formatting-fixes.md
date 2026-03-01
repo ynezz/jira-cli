@@ -2,7 +2,7 @@
 
 ## Context
 
-The `jira` CLI (ankitpokhrel/jira-cli, forked at `ynezz/jira-cli`) has confirmed formatting bugs in wiki table/link handling and several ADF rendering gaps. A separate code-block escaping issue has been reported historically, but should be treated as a hypothesis until reproduced on the current commit. This plan focuses on high-risk coverage and targeted fixes for confirmed gaps first.
+The `jira` CLI (ankitpokhrel/jira-cli, forked at `ynezz/jira-cli`) has confirmed formatting bugs in wiki table/link handling and several ADF rendering gaps. Code-block escaping behavior is observable on the current commit, but should still be treated as a compatibility hypothesis until a user-visible failing fixture is captured. This plan focuses on high-risk coverage and targeted fixes for confirmed gaps first.
 
 **Repo**: `/data/projects/jira-cli` (branch: `ynezz/issue-attachments`)
 **Installed**: v1.7.0-ynezz.2
