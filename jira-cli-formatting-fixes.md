@@ -143,7 +143,7 @@ Prefer small, targeted fixtures instead of extending the existing monolithic gol
 
 **Files**: `pkg/md/md.go`, plus the `github.com/kentaro-m/blackfriday-confluence` dependency (via module, not vendored path)
 
-**Current confidence**: low to medium. A broad local repro does not currently show generic escaping inside `{code}` blocks, so this should remain hypothesis-driven until a failing fixture is captured.
+**Current confidence**: medium. Escaping behavior is observable in current test expectations (`pkg/md/md_test.go`, `TestToJiraMD`), but defect status is still unproven until a user-visible failing fixture is captured for the target Jira renderer.
 
 **Fix path** (only if a failing fixture is confirmed):
 - Add a minimal regression test in `pkg/md/md_test.go` that fails on current HEAD.
@@ -167,7 +167,7 @@ Test data includes underline marks, but there is no `MarkUnderline` type constan
 
 1. Branch `ynezz/formatting-fixes` from `ynezz/issue-attachments`
 2. Add all test cases first (TDD)
-3. Implement fixes for bugs 1-3
+3. Implement confirmed fixes (bug 1 and bug 3), and implement bug 2 only if its failing fixture is confirmed
 4. Run full test suite: `go test -race ./...`
 5. Manual test: create ticket with all formatting elements, verify in Jira web UI
 6. Tag `v1.7.0-ynezz.3`, build via GoReleaser, install
