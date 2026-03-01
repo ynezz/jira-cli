@@ -162,14 +162,14 @@ func TestConvertTypedPanels(t *testing.T) {
 			expected: "{panel:bgColor=#deebff}Info{panel}\n\n{panel:bgColor=#fffae6}Warning{panel}",
 		},
 		{
-			name:     "nested typed panels convert inner and outer",
+			name:     "nested typed panels convert only top level pair",
 			input:    "{info}outer {warning}inner{warning} tail{info}",
-			expected: "{panel:bgColor=#deebff}outer {panel:bgColor=#fffae6}inner{panel} tail{panel}",
+			expected: "{panel:bgColor=#deebff}outer {warning}inner{warning} tail{panel}",
 		},
 		{
-			name:     "mismatched outer typed panels still convert nested valid pair",
+			name:     "mismatched outer typed panels remain unchanged",
 			input:    "{info}outer {warning}inner{warning} tail{note}",
-			expected: "{info}outer {panel:bgColor=#fffae6}inner{panel} tail{note}",
+			expected: "{info}outer {warning}inner{warning} tail{note}",
 		},
 		{
 			name:     "generic panel unchanged",

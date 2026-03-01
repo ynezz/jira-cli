@@ -2,6 +2,7 @@ package md
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 
@@ -49,59 +50,88 @@ func convertTypedPanels(input string) string {
 		start     int
 		end       int
 	}
-
-	findInnermostPair := func(value string) (typedPanelTag, typedPanelTag, bool) {
-		stack := make([]typedPanelTag, 0)
-		matches := typedPanelTagPattern.FindAllStringSubmatchIndex(value, -1)
-		for _, m := range matches {
-			if len(m) < 6 {
-				continue
-			}
-
-			tag := typedPanelTag{
-				panelType: value[m[2]:m[3]],
-				start:     m[0],
-				end:       m[1],
-			}
-			if m[4] >= 0 && m[5] >= 0 {
-				tag.attrs = value[m[4]:m[5]]
-			}
-
-			// Tags with explicit attributes are always treated as opening tags.
-			if tag.attrs != "" {
-				stack = append(stack, tag)
-				continue
-			}
-
-			if len(stack) > 0 && stack[len(stack)-1].panelType == tag.panelType {
-				return stack[len(stack)-1], tag, true
-			}
-
-			stack = append(stack, tag)
-		}
-
-		return typedPanelTag{}, typedPanelTag{}, false
+	type typedPanelPair struct {
+		open  typedPanelTag
+		close typedPanelTag
+		depth int
 	}
 
-	for {
-		open, close, ok := findInnermostPair(input)
-		if !ok {
-			return input
+	stack := make([]typedPanelTag, 0)
+	pairs := make([]typedPanelPair, 0)
+	matches := typedPanelTagPattern.FindAllStringSubmatchIndex(input, -1)
+
+	for _, m := range matches {
+		if len(m) < 6 {
+			continue
 		}
 
-		color, colorOK := panelColors[open.panelType]
+		tag := typedPanelTag{
+			panelType: input[m[2]:m[3]],
+			start:     m[0],
+			end:       m[1],
+		}
+		if m[4] >= 0 && m[5] >= 0 {
+			tag.attrs = input[m[4]:m[5]]
+		}
+
+		// Tags with explicit attributes are always treated as opening tags.
+		if tag.attrs != "" {
+			stack = append(stack, tag)
+			continue
+		}
+
+		if len(stack) > 0 && stack[len(stack)-1].panelType == tag.panelType {
+			depth := len(stack) - 1
+			open := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			pairs = append(pairs, typedPanelPair{
+				open:  open,
+				close: tag,
+				depth: depth,
+			})
+			continue
+		}
+
+		stack = append(stack, tag)
+	}
+
+	if len(pairs) == 0 {
+		return input
+	}
+
+	// Convert only top-level panel pairs. Nested panels are left as literal
+	// text fallback because nested {panel} macros produce fragmented/orphaned
+	// ADF panel nodes in Jira Cloud.
+	topLevel := make([]typedPanelPair, 0)
+	for _, pair := range pairs {
+		if pair.depth == 0 {
+			topLevel = append(topLevel, pair)
+		}
+	}
+	if len(topLevel) == 0 {
+		return input
+	}
+
+	sort.Slice(topLevel, func(i, j int) bool {
+		return topLevel[i].open.start > topLevel[j].open.start
+	})
+
+	for _, pair := range topLevel {
+		color, colorOK := panelColors[pair.open.panelType]
 		if !colorOK {
-			return input
+			continue
 		}
 
 		openTag := "{panel:bgColor=" + color
-		if open.attrs != "" {
-			openTag += "|" + open.attrs
+		if pair.open.attrs != "" {
+			openTag += "|" + pair.open.attrs
 		}
 		openTag += "}"
 
-		input = input[:open.start] + openTag + input[open.end:close.start] + "{panel}" + input[close.end:]
+		input = input[:pair.open.start] + openTag + input[pair.open.end:pair.close.start] + "{panel}" + input[pair.close.end:]
 	}
+
+	return input
 }
 
 func normalizeCodeBlocks(input string) string {
