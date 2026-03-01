@@ -138,11 +138,14 @@ Prefer small, targeted fixtures instead of extending the existing monolithic gol
 
 ### Bug 2: Code block escaping (investigate)
 
-**Files**: `pkg/md/md.go` (line 60), `vendor/github.com/kentaro-m/blackfriday-confluence/confluence.go`
+**Files**: `pkg/md/md.go`, plus the `github.com/kentaro-m/blackfriday-confluence` dependency (via module, not vendored path)
 
-The confluence renderer's `esc()` escapes `()[]{}*_-+^~![`. The `IgnoreMacroEscaping` flag only exempts `{`.
+**Current confidence**: low to medium. A broad local repro does not currently show generic escaping inside `{code}` blocks, so this should remain hypothesis-driven until a failing fixture is captured.
 
-**Fix** (if confirmed): Patch vendored renderer to skip `esc()` inside `CodeBlock` nodes, or post-process in `ToJiraMD()` to un-escape `{code}...{code}` content.
+**Fix path** (only if a failing fixture is confirmed):
+- Add a minimal regression test in `pkg/md/md_test.go` that fails on current HEAD.
+- Prefer upstreamable renderer behavior change (or module replace to a fork) over brittle string post-processing.
+- Use post-processing in `ToJiraMD()` only as a last resort, with strict fixture coverage.
 
 ### Bug 3: Underline mark not rendered (ADF→MD)
 
