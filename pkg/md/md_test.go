@@ -266,6 +266,26 @@ func TestToJiraMD_RegressionCases(t *testing.T) {
 			expectedContain: "* Apple\n* Banana\n** Yellow banana\n** Green banana\n*** Very green banana\n*** Slightly green banana\n* Cherry",
 		},
 		{
+			name: "ordered lists with 3-space indentation preserve depth",
+			input: `1. Level 0 item
+   1. Level 1 item
+      1. Level 2 item
+2. Level 0 item two`,
+			expectedContain: "# Level 0 item\n## Level 1 item\n### Level 2 item\n# Level 0 item two",
+		},
+		{
+			name: "mixed ordered and unordered list indentation styles in one document",
+			input: `1. Level 0 item
+   1. Level 1 item
+      1. Level 2 item
+2. Level 0 item two
+
+- Apple
+  - Banana
+    - Cherry`,
+			expectedContain: "# Level 0 item\n## Level 1 item\n### Level 2 item\n# Level 0 item two\n\n* Apple\n** Banana\n*** Cherry",
+		},
+		{
 			name:            "combined bold italic code mark nesting",
 			input:           "**bold _italic `code`_**",
 			expectedContain: "*bold _italic {{code}}_*",

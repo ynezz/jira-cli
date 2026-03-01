@@ -194,38 +194,7 @@ func normalizeListIndentation(input string) string {
 	lines := strings.Split(trimmedInput, "\n")
 
 	inFencedCode := false
-	minIndent := 0
-
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "```") {
-			inFencedCode = !inFencedCode
-			continue
-		}
-		if inFencedCode {
-			continue
-		}
-
-		match := markdownListPattern.FindStringSubmatch(line)
-		if len(match) < 2 {
-			continue
-		}
-
-		indent := len(match[1])
-		if indent == 0 {
-			continue
-		}
-
-		if minIndent == 0 || indent < minIndent {
-			minIndent = indent
-		}
-	}
-
-	// Preserve existing behavior for 4-space style lists and normalize only
-	// the common 2-space nested list style.
-	if minIndent != 2 {
-		return input
-	}
+	currentListIndentUnit := 0
 
 	inFencedCode = false
 	for i, line := range lines {
@@ -237,18 +206,50 @@ func normalizeListIndentation(input string) string {
 		if inFencedCode {
 			continue
 		}
+		if trimmed == "" {
+			currentListIndentUnit = 0
+			continue
+		}
 
 		match := markdownListPattern.FindStringSubmatch(line)
 		if len(match) < 2 {
+			currentListIndentUnit = 0
 			continue
 		}
 
 		indent := len(match[1])
-		if indent == 0 || indent%2 != 0 {
+		if indent == 0 {
 			continue
 		}
 
-		lines[i] = strings.Repeat(" ", indent*2) + line[indent:]
+		if currentListIndentUnit == 0 {
+			switch {
+			case indent%4 == 0:
+				// Preserve already-canonical 4-space nested list indentation.
+				currentListIndentUnit = -1
+				continue
+			case indent%2 == 0 && indent%3 != 0:
+				currentListIndentUnit = 2
+			case indent%3 == 0 && indent%2 != 0:
+				currentListIndentUnit = 3
+			case indent%2 == 0:
+				currentListIndentUnit = 2
+			case indent%3 == 0:
+				currentListIndentUnit = 3
+			default:
+				continue
+			}
+		}
+		if currentListIndentUnit < 0 {
+			continue
+		}
+
+		if indent%currentListIndentUnit != 0 {
+			continue
+		}
+
+		normalizedIndent := (indent / currentListIndentUnit) * 4
+		lines[i] = strings.Repeat(" ", normalizedIndent) + line[indent:]
 	}
 
 	output := strings.Join(lines, "\n")
