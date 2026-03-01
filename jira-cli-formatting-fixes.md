@@ -66,68 +66,57 @@ Three conversion paths in jira-cli:
 
 ---
 
-## Phase 1: Comprehensive test cases (~39 tests)
+## Phase 1: Coverage expansion (target: +18 to +24 tests)
 
-### `pkg/md/jirawiki/parser_test.go` (~20 tests)
+### `pkg/md/jirawiki/parser_test.go` (target: +10 to +14)
 
 **Add to `TestTables`:**
-1. Table header with link: `||Name||[Link|https://example.com]||`
-2. Table cell with link: `|cell|[Google|https://google.com]|`
-3. Table cell with multiple links: `|[A|url1] and [B|url2]|text|`
-4. Table cell with bold+link: `|*[Bold Link|url]*|`
-5. Empty table cells: `||H1||H2||\n|||data|`
-
-**Add to `TestParseFencedCodeBlocks`:**
-6. Code block with `()[]{}*_-` characters (verify no escaping)
-7. Code block with wiki-looking content: `h1. Not a heading`
-8. Code block with table-looking content: `||not||a||table||`
-9. Adjacent code blocks with different languages
-10. Code block with blank lines inside
+1. Header cell containing Jira link: `||Name||[Link|https://example.com]||`
+2. Body cell containing Jira link: `|cell|[Google|https://google.com]|`
+3. Cell containing multiple links: `|[A|url1] and [B|url2]|text|`
+4. Cell mixing bold+link syntax: `|*[Bold Link|url]*|`
+5. Empty cell edge case: `||H1||H2||\n|||data|`
 
 **Add to `TestParseReferenceLinks`:**
-11. Link inside bold: `*[text|url]*`
-12. Link inside italic: `_[text|url]_`
-13. Multiple links in one line: `[A|url1] and [B|url2]`
-14. Link with special chars in URL: `[text|https://example.com/path?q=a&b=c#frag]`
+6. Link inside bold: `*[text|url]*`
+7. Link inside italic: `_[text|url]_`
+8. Multiple links in one line: `[A|url1] and [B|url2]`
+9. Link with URL query+fragment: `[text|https://example.com/path?q=a&b=c#frag]`
 
-**Add to `TestParseListTags`:**
-15. List item with link: `* [Google|https://google.com]`
-16. List item with code: `* some {{code}} here`
-17. Nested list with mixed bullet/ordered: `* item\n## ordered sub`
-18. List item with bold+italic: `* *bold* _italic_`
+**Add to `TestParseFencedCodeBlocks`:**
+10. Code block containing wiki-looking content: `h1. Not a heading`
+11. Code block containing table-looking content: `||not||a||table||`
+12. Adjacent `{code}` / `{noformat}` blocks render independently
+13. Code block containing blank lines and braces
 
-**Add to `TestParsePanels`:**
-19. Panel with list inside: `{info}\n* item1\n* item2\n{info}`
-20. Panel with code block inside: `{warning}\n{code}...\n{code}\n{warning}`
-21. Panel with link: `{note}See [here|url]{note}`
-22. All 5 panel types: `{info}`, `{warning}`, `{note}`, `{tip}`, `{error}`
+**Add to `TestParseBlockQuote`:**
+14. Blockquote containing list markers remains quoted content
 
-### `pkg/md/md_test.go` (~7 tests)
+Note: do not add horizontal-rule parsing tests in this file; current Wiki→MD parser has no `----` token support.
 
-Add to `TestToJiraMD` (markdown → Jira wiki):
-23. Fenced code block with special chars → verify `{code}` output has no escaping
-24. Table with links → verify `||header||` output
-25. Horizontal rule `---` → verify `----` output
-26. Nested lists → verify proper formatting
-27. Combined bold+italic+code → verify proper nesting
-28. All heading levels (1-6)
-29. Blockquote with rich content
+### `pkg/md/md_test.go` (target: +5 to +7)
 
-### `pkg/adf/adf_test.go` (~7 tests)
+Add focused `TestToJiraMD` (markdown → Jira wiki) cases:
+15. Markdown table containing links (header/body)
+16. Horizontal rule `---` → `----`
+17. Nested lists preserve depth
+18. Combined bold+italic+code mark nesting
+19. All heading levels (1-6)
+20. Blockquote containing nested rich text
+21. Typed panel conversion (`{info}` / `{warning}`) through `ToJiraMD`
 
-Add ADF→Markdown test cases:
-30. ADF with underline mark → should render (currently missing handler)
-31. ADF with mention preserving ID
-32. ADF with inlineCard preserving URL
-33. ADF with all 5 panel types
-34. ADF with nested lists (bullet inside ordered)
-35. ADF with table containing links in cells
-36. ADF with code block + language attribute
+Gate any code-block escaping test on a reproducible failing fixture from current HEAD.
 
-### New: `TestParseBlockQuoteNested` and `TestParseHorizontalRule`
-37. Blockquote with list: `{quote}\n* item\n{quote}`
-38. Blockquote with bold/italic content
-39. `----` horizontal rule
+### `pkg/adf/adf_test.go` (target: +3 to +5)
+
+Add focused ADF→Markdown fixtures:
+22. Mention node renders display text; account ID omission is explicit
+23. Inline card node renders URL text
+24. Underline mark behavior (after implementation decision)
+25. Code block preserves language attribute handling
+26. Table cell text containing link-like content is not split incorrectly
+
+Prefer small, targeted fixtures instead of extending the existing monolithic golden string only.
 
 ---
 
